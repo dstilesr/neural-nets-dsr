@@ -14,8 +14,11 @@ class NetworkLayer:
             b: np.ndarray,
             activation: activations.ActivationFunc):
 
-        self.w = w
-        self.b = b
+        if w.shape[0] != b.shape[0]:
+            raise ValueError("Mismatched dimensions!")
+
+        self.__w = w
+        self.__b = b
         self.__activation = activation
         self.cache = {}
 
@@ -59,6 +62,22 @@ class NetworkLayer:
         """
         return self.__activation
 
+    @property
+    def weights(self) -> np.ndarray:
+        """
+        Read-only weight matrix of the layer.
+        :return:
+        """
+        return self.__w
+
+    @property
+    def biases(self) -> np.ndarray:
+        """
+        Read-only bias vector of the layer
+        :return:
+        """
+        return self.__b
+
     def reset_cache(self):
         """
         Deletes the cached value of the forward prop.
@@ -78,7 +97,7 @@ class NetworkLayer:
             or not.
         :return:
         """
-        z = np.dot(self.w, x) + self.b
+        z = np.dot(self.__w, x) + self.__b
         if keep_cache:
             self.cache["z"] = z
             self.cache["a"] = x
@@ -99,4 +118,15 @@ class NetworkLayer:
         db = np.mean(dz, axis=1, keepdims=True)
 
         self.reset_cache()
-        return dw, db, np.dot(self.w.T, dz)
+        return dw, db, np.dot(self.__w.T, dz)
+
+    def set_weights(self, w: np.ndarray, b: np.ndarray):
+        """
+        Updates the weights and biases with new values.
+        :param w: Updated weights.
+        :param b: Updated biases.
+        :return:
+        """
+        assert w.shape == self.__w.shape and b.shape == self.__b.shape
+        self.__w = w
+        self.__b = b

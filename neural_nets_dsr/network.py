@@ -26,11 +26,11 @@ class NeuralNet:
         :param seed: Seed for Numpy RNG.
         :return: The initialized network.
         """
-        if (len(layer_dims) + 1) != len(activations):
+        if (len(layer_dims) - 1) != len(activations):
             raise ValueError("Incompatible lengths!")
 
         layers = []
-        for d in range(1, layer_dims):
+        for d in range(1, len(layer_dims)):
             layers.append(NetworkLayer.initialize(
                 layer_dims[d],
                 layer_dims[d - 1],
@@ -41,15 +41,19 @@ class NeuralNet:
 
         return cls(layers)
 
-    def compute_predictions(self, x: np.ndarray) -> np.ndarray:
+    def compute_predictions(
+            self,
+            x: np.ndarray,
+            keep_caches: bool = False) -> np.ndarray:
         """
         Computes predictions by applying forward propagation.
         :param x: Array of inputs. Columns represent individual examples.
+        :param keep_caches: Keep activation caches in layers for backprop.
         :return: Array of predictions.
         """
         out = x
         for layer in self.layers:
-            out = layer.forward_prop(x)
+            out = layer.forward_prop(x, keep_cache=keep_caches)
         return out
 
 
