@@ -23,8 +23,8 @@ class GradientDescent(Optimizer):
         :param learning_rate:
         :param verbose: Print cost every 100 iterations if true.
         """
-        self.__learning_rate = learning_rate
-        self.__network: NeuralNet = None
+        self._learning_rate = learning_rate
+        self._network: NeuralNet = None
         self._verbose = verbose
         self._max_iter = max_iterations
 
@@ -37,7 +37,7 @@ class GradientDescent(Optimizer):
 
     @property
     def learning_rate(self) -> float:
-        return self.__learning_rate
+        return self._learning_rate
 
     @property
     def verbose(self) -> bool:
@@ -62,14 +62,14 @@ class GradientDescent(Optimizer):
         :param y: Training set labels.
         :return: Cost before the backprop.
         """
-        if self.__network is None:
+        if self._network is None:
             raise NotImplementedError("No network selected!")
 
-        y_pred = self.__network.compute_predictions(x, True)
+        y_pred = self._network.compute_predictions(x, True)
         cost = self.cost_func(y, y_pred)
         da = self.cost_func.gradient(y, y_pred)
 
-        for lyr in self.__network.layers[::-1]:
+        for lyr in self._network.layers[::-1]:
             dw, db, da = lyr.back_prop(da)
             lyr.set_weights(
                 w=lyr.weights - self.learning_rate * dw,
@@ -89,13 +89,11 @@ class GradientDescent(Optimizer):
         :param y: Training set labels.
         :return: The fitted network.
         """
-        self.__network = network
+        self._network = network
 
         for i in range(self._max_iter):
             cost = self.gradient_descent_iteration(x, y)
             if self.verbose and i % 100 == 0:
                 print("Cost at iteration %d: %f" % (i, cost))
 
-        return self.__network
-
-
+        return self._network
