@@ -53,7 +53,7 @@ class NeuralNet:
         """
         out = x
         for layer in self.layers:
-            out = layer.forward_prop(x, keep_cache=keep_caches)
+            out = layer.forward_prop(out, keep_cache=keep_caches)
         return out
 
 
