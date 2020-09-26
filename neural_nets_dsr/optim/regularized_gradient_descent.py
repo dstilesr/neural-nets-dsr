@@ -14,7 +14,7 @@ class GradientDescentL2(GradientDescent):
             cost_func: Union[str, CostFunction],
             max_iterations: int = 700,
             learning_rate: float = 0.1,
-            l2_param: float = 0.25,
+            l2_param: float = 0.025,
             verbose: bool = False):
         """
 
