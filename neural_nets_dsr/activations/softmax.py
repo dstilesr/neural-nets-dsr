@@ -8,8 +8,9 @@ def softmax_func(x: T) -> T:
     :param x:
     :return:
     """
-    x_exp = np.exp(x)
-    return x_exp / np.sum(x_exp, axis=0)
+    d = np.max(x, axis=0, keepdims=True)
+    x_exp = np.exp(x - d)
+    return x_exp / np.sum(x_exp, axis=0, keepdims=True)
 
 
 def softmax_gradient(x: T) -> T:
@@ -19,7 +20,7 @@ def softmax_gradient(x: T) -> T:
     :return:
     """
     sm = softmax_func(x)
-    return sm - sm ** 2
+    return sm - np.square(sm)
 
 
 softmax_activation = ActivationFunc(softmax_func, softmax_gradient)
