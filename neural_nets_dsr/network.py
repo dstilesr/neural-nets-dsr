@@ -17,12 +17,14 @@ class NeuralNet:
             cls,
             layer_dims: List[int],
             activations: List[Union[str, ActivationFunc]],
+            xavier: bool = False,
             seed: int = 321):
         """
         Initializes the network.
         :param layer_dims: Dimensions of the network layers. First entry is
             the number of input features.
         :param activations: Activation functions for each layer.
+        :param xavier: Use xavier normalization for weights.
         :param seed: Seed for Numpy RNG.
         :return: The initialized network.
         """
@@ -31,12 +33,21 @@ class NeuralNet:
 
         layers = []
         for d in range(1, len(layer_dims)):
-            layers.append(NetworkLayer.initialize(
-                layer_dims[d],
-                layer_dims[d - 1],
-                activations[d - 1],
-                seed=seed
-            ))
+            if xavier:
+                layers.append(NetworkLayer.initialize(
+                    layer_dims[d],
+                    layer_dims[d - 1],
+                    activations[d - 1],
+                    scale=np.sqrt(2 / layer_dims[d - 1]),
+                    seed=seed
+                ))
+            else:
+                layers.append(NetworkLayer.initialize(
+                    layer_dims[d],
+                    layer_dims[d - 1],
+                    activations[d - 1],
+                    seed=seed
+                ))
             seed += 1
 
         return cls(layers)
