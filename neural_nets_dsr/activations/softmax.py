@@ -23,4 +23,4 @@ def softmax_gradient(x: T) -> T:
     return sm - np.square(sm)
 
 
-softmax_activation = ActivationFunc(softmax_func, softmax_gradient)
+softmax_activation = ActivationFunc(softmax_func, softmax_gradient, "softmax")

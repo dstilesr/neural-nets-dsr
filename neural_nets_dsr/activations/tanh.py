@@ -21,4 +21,4 @@ def tanh_derivative(x: T) -> T:
     return 1. - np.square(th)
 
 
-tanh_activation = ActivationFunc(tanh, tanh_derivative)
+tanh_activation = ActivationFunc(tanh, tanh_derivative, "tanh")

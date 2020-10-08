@@ -20,4 +20,4 @@ def identity_derivative(x: T) -> T:
     return np.ones(x.shape)
 
 
-linear_activation = ActivationFunc(identity, identity_derivative)
+linear_activation = ActivationFunc(identity, identity_derivative, "linear")
