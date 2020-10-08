@@ -12,21 +12,27 @@ class GradientDescentL2(GradientDescent):
     def __init__(
             self,
             cost_func: Union[str, CostFunction],
-            max_iterations: int = 700,
+            epochs: int = 700,
+            batch_size: int = -1,
+            axis: int = 1,
             learning_rate: float = 0.1,
             l2_param: float = 0.025,
             verbose: bool = False):
         """
 
         :param cost_func:
-        :param max_iterations:
+        :param epochs:
+        :param batch_size:
+        :param axis:
         :param learning_rate:
         :param l2_param:
         :param verbose:
         """
         super().__init__(
             cost_func=cost_func,
-            max_iterations=max_iterations,
+            epochs=epochs,
+            batch_size=batch_size,
+            axis=axis,
             learning_rate=learning_rate,
             verbose=verbose
         )

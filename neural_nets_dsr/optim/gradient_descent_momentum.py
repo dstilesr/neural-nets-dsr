@@ -2,10 +2,10 @@ import numpy as np
 from typing import Union
 from ..network import NeuralNet
 from ..cost_functions import CostFunction
-from .minibatch_gradient_descent import MiniBatchGDL2
+from .regularized_gradient_descent import GradientDescentL2
 
 
-class GradientDescentWithMomentum(MiniBatchGDL2):
+class GradientDescentWithMomentum(GradientDescentL2):
     """
     Mini batch gradient descent with momentum.
     """
@@ -17,6 +17,7 @@ class GradientDescentWithMomentum(MiniBatchGDL2):
             l2_param: float = 0.025,
             batch_size: int = 512,
             beta: float = 0.9,
+            axis: int = 1,
             verbose: bool = False):
         """
 
@@ -26,15 +27,17 @@ class GradientDescentWithMomentum(MiniBatchGDL2):
         :param l2_param: Parameter for L2 regularization.
         :param batch_size: Minibatch size.
         :param beta: Meta parameter for momentum term.
-        :param verbose: Print copst every 100 epochs.
+        :param axis:
+        :param verbose: Print cost every 100 epochs.
         """
         assert 0. < beta < 1., "Invalid beta parameter! Must satisfy 0 < beta < 1."
         super().__init__(
             cost_func,
             epochs,
-            learning_rate,
-            l2_param,
-            batch_size,
+            batch_size=batch_size,
+            learning_rate=learning_rate,
+            l2_param=l2_param,
+            axis=axis,
             verbose=verbose
         )
         self._batch_size = batch_size

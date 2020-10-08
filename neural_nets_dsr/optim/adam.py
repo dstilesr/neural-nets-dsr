@@ -2,10 +2,10 @@ import numpy as np
 from typing import Union
 from ..network import NeuralNet
 from ..cost_functions import CostFunction
-from .minibatch_gradient_descent import MiniBatchGDL2
+from .regularized_gradient_descent import GradientDescentL2
 
 
-class AdamOptimizer(MiniBatchGDL2):
+class AdamOptimizer(GradientDescentL2):
     """
     Mini batch gradient descent with momentum.
     """
@@ -15,6 +15,7 @@ class AdamOptimizer(MiniBatchGDL2):
             epochs: int = 600,
             learning_rate: float = 0.1,
             l2_param: float = 0.025,
+            axis: int = 1,
             batch_size: int = 512,
             beta_momentum: float = 0.9,
             beta_rms: float = 0.99,
@@ -26,6 +27,7 @@ class AdamOptimizer(MiniBatchGDL2):
         :param epochs:
         :param learning_rate:
         :param l2_param:
+        :param axis:
         :param batch_size:
         :param beta_momentum: Beta for momentum parameter.
         :param beta_rms: Beta for RMS.
@@ -37,9 +39,10 @@ class AdamOptimizer(MiniBatchGDL2):
         super().__init__(
             cost_func,
             epochs,
+            batch_size,
+            axis,
             learning_rate,
             l2_param,
-            batch_size,
             verbose=verbose
         )
         self._batch_size = batch_size
