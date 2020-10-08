@@ -1,6 +1,6 @@
 import numpy as np
 from typing import List, Union
-from .networklayer import NetworkLayer
+from .layers import DenseLayer
 from .activations import ActivationFunc
 
 
@@ -9,7 +9,7 @@ class NeuralNet:
     Class to represent a Neural Network.
     """
 
-    def __init__(self, layers: List[NetworkLayer]):
+    def __init__(self, layers: List[DenseLayer]):
         self.layers = layers
 
     @classmethod
@@ -34,7 +34,7 @@ class NeuralNet:
         layers = []
         for d in range(1, len(layer_dims)):
             if xavier:
-                layers.append(NetworkLayer.initialize(
+                layers.append(DenseLayer.initialize(
                     layer_dims[d],
                     layer_dims[d - 1],
                     activations[d - 1],
@@ -42,7 +42,7 @@ class NeuralNet:
                     seed=seed
                 ))
             else:
-                layers.append(NetworkLayer.initialize(
+                layers.append(DenseLayer.initialize(
                     layer_dims[d],
                     layer_dims[d - 1],
                     activations[d - 1],
@@ -66,5 +66,17 @@ class NeuralNet:
         for layer in self.layers:
             out = layer.forward_prop(out, keep_cache=keep_caches)
         return out
+
+    def append(self, other):
+        """
+        Appends the layers of the other network.
+        :param other: Another NeuralNet.
+        :return: None
+        """
+        fst_weights = other.layers[0].weights.shape[1]
+        if fst_weights != self.layers[-1].weights.shape[0]:
+            raise ValueError("Incompatible Lengths!")
+
+        self.layers.append(other.layers)
 
 

@@ -1,9 +1,10 @@
 import numpy as np
 from typing import Union
-from . import activations
+from .. import activations
+from .base import BaseLayer
 
 
-class NetworkLayer:
+class DenseLayer(BaseLayer):
     """
     Class to represent a layer of a neural network.
     """
