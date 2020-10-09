@@ -40,13 +40,7 @@ class DenseLayer(BaseLayer):
         :param scale: Scale factor for initial weights.
         :return:
         """
-        if isinstance(activation, activations.ActivationFunc):
-            act = activation
-        elif activation in activations.ACTIVATIONS_NAMES.keys():
-            act = activations.ACTIVATIONS_NAMES[activation]
-        else:
-            raise ValueError("Unknown activation function!")
-
+        act = cls.get_activation(activation)
         np.random.seed(seed)
         obj = cls(
             w=np.random.randn(num_neurons, prev_layer_neurons) * scale,
