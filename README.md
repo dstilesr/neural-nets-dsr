@@ -3,12 +3,16 @@
 ## Contents
 * [About](#about)
 * [Repository Contents](#repository-contents)
+* [Branch 'Policies'](#branch-policies)
+* [Current Issues](#current-issues)
 
 ## About
 This repo contains some personal implementations of neural networks done for
 practice implementing backprop and optimization from scratch (using only numpy).
 
-For development, push to the `develop` branch.
+
+## Branch 'Policies'
+For development, push to the `develop` branch, then merge with master when ready.
 
 ## Repository Contents
 The `neural_nets_dsr` package contains the following subpackages and modules:
@@ -28,5 +32,10 @@ The `neural_nets_dsr` package contains the following subpackages and modules:
 
 - Finally, the `utils.py` module is for miscellaneous utility functions and
   classes.
+
+## Current Issues
+- Convolution backprop not always working.
+- Doubts about batchnorm derivative computation.
+- Numerical stability.
 
 [Back to top](#neural-nets)

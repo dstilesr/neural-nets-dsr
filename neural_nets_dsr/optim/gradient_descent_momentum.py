@@ -54,6 +54,12 @@ class GradientDescentWithMomentum(GradientDescentL2):
             self,
             x: np.ndarray,
             y: np.ndarray) -> float:
+        """
+        Performs iteration of gradient descent with momentum.
+        :param x:
+        :param y:
+        :return:
+        """
         if self._network is None:
             raise NotImplementedError("No network selected!")
 

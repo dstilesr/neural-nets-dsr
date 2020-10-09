@@ -35,6 +35,10 @@ class Convolution2D(BaseLayer):
         return self.__filters
 
     @property
+    def weights(self) -> np.ndarray:
+        return self.__filters
+
+    @property
     def biases(self) -> np.ndarray:
         return self.__biases
 
@@ -100,8 +104,8 @@ class Convolution2D(BaseLayer):
         if self.padding == "valid":
             output_shape = (
                 x_shape[0],
-                x_shape[1] - 2 * (self.filters.shape[0] // 2),
-                x_shape[2] - 2 * (self.filters.shape[1] // 2),
+                int(x_shape[1] - 2 * (self.filters.shape[0] // 2)),
+                int(x_shape[2] - 2 * (self.filters.shape[1] // 2)),
                 self.filters.shape[-1]
             )
         else:
@@ -113,20 +117,23 @@ class Convolution2D(BaseLayer):
             )
         return output_shape
 
-    def same_pad(self, x: np.ndarray) -> np.ndarray:
+    def pad(self, x: np.ndarray) -> np.ndarray:
         """
-        Performs 'same' padding on the input array.
+        Performs padding on the input array.
         :param x:
         :return:
         """
-        pad_x = self.filters.shape[0] // 2
-        pad_y = self.filters.shape[1] // 2
-        x_pad = np.pad(x, (
-            (0, 0),
-            (pad_x, pad_x),
-            (pad_y, pad_y),
-            (0, 0)
-        ), mode="constant", constant_values=(0., 0.))
+        if self.padding == "same":
+            pad_x = self.filters.shape[0] // 2
+            pad_y = self.filters.shape[1] // 2
+            x_pad = np.pad(x, (
+                (0, 0),
+                (pad_x, pad_x),
+                (pad_y, pad_y),
+                (0, 0)
+            ), mode="constant", constant_values=(0., 0.))
+        else:
+            x_pad = x
         return x_pad
 
     def convolve_filter(self, filter_index: int, x: np.ndarray) -> np.ndarray:
@@ -158,35 +165,67 @@ class Convolution2D(BaseLayer):
         :param keep_cache:
         :return:
         """
-        if keep_cache:
-            self._cache["a_prev"] = x
-            if self.padding == "same":
-                self._cache["a_prev_pad"] = self.same_pad(x)
-            else:
-                self._cache["a_prev_pad"] = x
-
         z = np.zeros(self.output_shape(x.shape))
         for f in range(self.filters.shape[-1]):
             z[:, :, :, f] = self.convolve_filter(f, x)
 
         z += self.biases
-        return self.activation(z)
+        a = self.activation(z)
+
+        if keep_cache:
+            self._cache["a_prev"] = x
+            self._cache["a"] = a
+            self._cache["a_prev_pad"] = self.pad(x)
+
+        return a
+
+    def __compute_dwda(self, dz: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+        """
+        Compute the gradient of the cost function wrt to the layer's weights
+        and previous layer's activations.
+        :param dz:
+        :param da:
+        :return:
+        """
+        outshape = self.output_shape(self._cache["a_prev"].shape)
+        filt_h, filt_w = self.filters.shape[:2]
+        dw = np.zeros_like(self.filters)
+        da_prev_pd = np.zeros_like(self._cache["a_prev_pad"])
+
+        for ex in range(dz.shape[0]):
+            for i in range(outshape[1]):
+                for j in range(outshape[2]):
+                    for c in range(self.filters.shape[-1]):
+                        a_slice = self._cache["a_prev_pad"][
+                                  ex, i:(i + filt_h), j:(j + filt_w), :
+                                  ]
+                        dw[:, :, :, c] += a_slice * dz[ex, i, j, c]
+
+                        da_prev_pd[ex, i:(i + filt_h), j:(j + filt_w), :] += (
+                            self.filters[:, :, :, c] * dz[ex, i, j, c]
+                        )
+
+        if self.padding == "same":
+            pdx, pdy = filt_h // 2, filt_w // 2
+            da_prev = da_prev_pd[:, pdx:-pdx, pdy:-pdy, :]
+        else:
+            da_prev = da_prev_pd
+
+        return dw / dz.shape[0], da_prev
 
     def back_prop(self, da: np.ndarray):
         """
-
+        Back propagation on this layer.
         :param da:
-        :return: Gradients of filters and biases and wrt to previous
+        :return: Gradients wrt filters, biases and to previous layer's
             activations.
         """
-        # TODO UNFINISHED
-        raise NotImplementedError()
         dz = self.activation.gradient(da)
         db = np.sum(dz, axis=(1, 2), keepdims=True)
         db = np.mean(db, axis=0, keepdims=False)
-
-        dw = np.zeros(self.filters.shape)
-        return dw, db, da
+        dw, da_prev = self.__compute_dwda(dz)
+        self._cache = {}
+        return dw, db, da_prev
 
     def set_weights(self, w: np.ndarray, b: np.ndarray):
         """
@@ -196,9 +235,8 @@ class Convolution2D(BaseLayer):
         :return:
         """
         assert w.shape == self.__filters.shape
-        self.__filters = w
-
         assert b.shape == self.__biases.shape
+        self.__filters = w
         self.__biases = b
 
 
@@ -209,6 +247,22 @@ class FlattenLayer(BaseLayer):
 
     def __init__(self):
         self._input_shape = None
+
+    @property
+    def weights(self) -> np.ndarray:
+        """
+        Dummy property for compatibility
+        :return:
+        """
+        return np.zeros((1, 1))
+
+    @property
+    def biases(self) -> np.ndarray:
+        """
+        Dummy property for compatibility
+        :return:
+        """
+        return np.zeros((1, 1))
 
     def forward_prop(
             self,
@@ -231,7 +285,7 @@ class FlattenLayer(BaseLayer):
         :param da:
         :return:
         """
-        return None, None, da.T.reshape(self._input_shape)
+        return 0.0, 0.0, da.T.reshape(self._input_shape)
 
     def set_weights(self, *args, **kwargs):
         pass

@@ -18,6 +18,7 @@ class BaseBatchIter(ABC, Iterable[Tuple[np.ndarray, np.ndarray]]):
         self._x = x
         self._y = y
         self._axis = axis
+        self._ndim = x.ndim
 
     @property
     def axis(self) -> int:
@@ -159,7 +160,11 @@ class MiniBatchIterator(BaseBatchIter):
 
     def __next__(self):
         inds = self.next_indices()
-        if self.axis == 0:
-            return self._x[inds, :], self._y[inds, :]
-        else:
-            return self._x[:, inds], self._y[:, inds]
+        if self._ndim == 2:
+            if self.axis == 0:
+                return self._x[inds, :], self._y[inds, :]
+            else:
+                return self._x[:, inds], self._y[:, inds]
+        elif self._ndim == 4:
+            assert self.axis == 0
+            return self._x[inds, :, :, :], self._y[:, inds]
