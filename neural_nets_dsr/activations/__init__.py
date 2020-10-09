@@ -6,9 +6,11 @@ from .identity import linear_activation
 from .softmax import softmax_activation
 
 ACTIVATIONS_NAMES = {
-    "relu": relu_activation,
-    "tanh": tanh_activation,
-    "sigmoid": sigmoid_activation,
-    "linear": linear_activation,
-    "softmax": softmax_activation
+    relu_activation.name: relu_activation,
+    tanh_activation.name: tanh_activation,
+    sigmoid_activation.name: sigmoid_activation,
+    linear_activation.name: linear_activation,
+    softmax_activation.name: softmax_activation
 }
+
+AVAILABLE_ACTIVATIONS = list(ACTIVATIONS_NAMES.keys())

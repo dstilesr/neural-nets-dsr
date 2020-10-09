@@ -1,4 +1,5 @@
 import numpy as np
+from . import batch_iter
 from typing import Union
 from .base import Optimizer
 from ..network import NeuralNet
@@ -7,26 +8,36 @@ from ..cost_functions import CostFunction, COST_NAMES
 
 class GradientDescent(Optimizer):
     """
-    Batch Gradient Descent optimizer for neural networks.
+    Gradient Descent optimizer for neural networks.
     """
 
     def __init__(
             self,
             cost_func: Union[str, CostFunction],
-            max_iterations: int = 700,
+            epochs: int = 150,
             learning_rate: float = 0.1,
+            batch_size: int = -1,
+            axis: int = 1,
+            shuffle: bool = True,
             verbose: bool = False):
         """
 
         :param cost_func:
-        :param max_iterations:
+        :param epochs:
         :param learning_rate:
+        :param batch_size: Size of minibatches (-1 -> full batch).
+        :param axis: Axis along which to split training examples.
+        :param shuffle:
         :param verbose: Print cost every 100 iterations if true.
         """
         self._learning_rate = learning_rate
         self._network: NeuralNet = None
         self._verbose = verbose
-        self._max_iter = max_iterations
+        self._epochs = epochs
+        self._batch_size = batch_size
+        self._batch_iter = None
+        self._shuffle = shuffle
+        self._axis = axis
 
         if isinstance(cost_func, CostFunction):
             self.__cost = cost_func
@@ -34,6 +45,14 @@ class GradientDescent(Optimizer):
             self.__cost = COST_NAMES[cost_func]
         else:
             raise ValueError("Unknown cost function!")
+
+    @property
+    def batch_size(self) -> int:
+        return self._batch_size
+
+    @property
+    def cost_func(self) -> CostFunction:
+        return self.__cost
 
     @property
     def learning_rate(self) -> float:
@@ -44,30 +63,52 @@ class GradientDescent(Optimizer):
         return self._verbose
 
     @property
-    def cost_func(self) -> CostFunction:
-        return self.__cost
+    def axis(self) -> int:
+        return self._axis
 
-    def set_verbose(self, verbose: bool):
+    def make_batch_iterator(
+            self,
+            x: np.ndarray,
+            y: np.ndarray) -> None:
         """
-        Change verbosity.
-        :param verbose:
+        Makes a batch iterator to run gradient descent.
+        :param x:
+        :param y:
         :return:
         """
-        self._verbose = verbose
+        if self.batch_size <= 0:
+            self._batch_iter = batch_iter.FullBatchIterator(
+                x,
+                y,
+                self._axis,
+                self._epochs
+            )
+        else:
+            self._batch_iter = batch_iter.MiniBatchIterator(
+                x,
+                y,
+                self._axis,
+                self._batch_size,
+                self._epochs,
+                self._shuffle
+            )
 
-    def gradient_descent_iteration(self, x: np.ndarray, y: np.ndarray) -> float:
+    def gradient_descent_iteration(
+            self,
+            x_batch: np.ndarray,
+            y_batch: np.ndarray) -> float:
         """
         Does a single iteration of gradient descent
-        :param x: Training set features.
-        :param y: Training set labels.
+        :param x_batch: Training set features.
+        :param y_batch: Training set labels.
         :return: Cost before the backprop.
         """
         if self._network is None:
             raise NotImplementedError("No network selected!")
 
-        y_pred = self._network.compute_predictions(x, True)
-        cost = self.cost_func(y, y_pred)
-        da = self.cost_func.gradient(y, y_pred)
+        y_pred = self._network.compute_predictions(x_batch, True)
+        cost = self.cost_func(y_batch, y_pred)
+        da = self.cost_func.gradient(y_batch, y_pred)
 
         for lyr in self._network.layers[::-1]:
             dw, db, da = lyr.back_prop(da)
@@ -90,9 +131,9 @@ class GradientDescent(Optimizer):
         :return: The fitted network.
         """
         self._network = network
-
-        for i in range(self._max_iter):
-            cost = self.gradient_descent_iteration(x, y)
+        self.make_batch_iterator(x, y)
+        for i, (x_batch, y_batch) in enumerate(self._batch_iter):
+            cost = self.gradient_descent_iteration(x_batch, y_batch)
             if self.verbose and i % 100 == 0:
                 print("Cost at iteration %d: %f" % (i, cost))
 

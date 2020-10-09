@@ -1,11 +1,12 @@
 import numpy as np
-from typing import Union
+from typing import Union, List
 from ..network import NeuralNet
 from ..cost_functions import CostFunction
-from .minibatch_gradient_descent import MiniBatchGDL2
+from ..utils import ExpAvgAccumulator as ExpAvg
+from .regularized_gradient_descent import GradientDescentL2
 
 
-class GradientDescentWithMomentum(MiniBatchGDL2):
+class GradientDescentWithMomentum(GradientDescentL2):
     """
     Mini batch gradient descent with momentum.
     """
@@ -17,6 +18,7 @@ class GradientDescentWithMomentum(MiniBatchGDL2):
             l2_param: float = 0.025,
             batch_size: int = 512,
             beta: float = 0.9,
+            axis: int = 1,
             verbose: bool = False):
         """
 
@@ -26,21 +28,23 @@ class GradientDescentWithMomentum(MiniBatchGDL2):
         :param l2_param: Parameter for L2 regularization.
         :param batch_size: Minibatch size.
         :param beta: Meta parameter for momentum term.
-        :param verbose: Print copst every 100 epochs.
+        :param axis:
+        :param verbose: Print cost every 100 epochs.
         """
         assert 0. < beta < 1., "Invalid beta parameter! Must satisfy 0 < beta < 1."
         super().__init__(
             cost_func,
             epochs,
-            learning_rate,
-            l2_param,
-            batch_size,
+            batch_size=batch_size,
+            learning_rate=learning_rate,
+            l2_param=l2_param,
+            axis=axis,
             verbose=verbose
         )
         self._batch_size = batch_size
         self._beta = beta
-        self._momentum_b = []
-        self._momentum_w = []
+        self._momentum_b: List[ExpAvg] = []
+        self._momentum_w: List[ExpAvg] = []
 
     @property
     def beta(self) -> float:
@@ -50,6 +54,12 @@ class GradientDescentWithMomentum(MiniBatchGDL2):
             self,
             x: np.ndarray,
             y: np.ndarray) -> float:
+        """
+        Performs iteration of gradient descent with momentum.
+        :param x:
+        :param y:
+        :return:
+        """
         if self._network is None:
             raise NotImplementedError("No network selected!")
 
@@ -61,20 +71,14 @@ class GradientDescentWithMomentum(MiniBatchGDL2):
             lyr = self._network.layers[i]
             dw, db, da = lyr.back_prop(da)
 
-            self._momentum_b[i] = (
-                    self.beta * self._momentum_b[i]
-                    + (1 - self.beta) * db
-            )
-            self._momentum_w[i] = (
-                    self.beta * self._momentum_w[i]
-                    + (1 - self.beta) * dw
-            )
+            self._momentum_b[i].update_value(db)
+            self._momentum_w[i].update_value(dw)
 
             reg_w = self.l2_param * lyr.weights
             lyr.set_weights(
                 w=lyr.weights
-                    - self.learning_rate * self._momentum_w[i] - reg_w,
-                b=lyr.biases - self.learning_rate * self._momentum_b[i]
+                    - self.learning_rate * self._momentum_w[i].value - reg_w,
+                b=lyr.biases - self.learning_rate * self._momentum_b[i].value
             )
         return cost
 
@@ -91,7 +95,11 @@ class GradientDescentWithMomentum(MiniBatchGDL2):
         :return:
         """
         for lyr in network.layers:
-            self._momentum_w.append(np.zeros(lyr.weights.shape))
-            self._momentum_b.append(np.zeros(lyr.biases.shape))
+            self._momentum_w.append(
+                ExpAvg.create(lyr.weights.shape, self.beta)
+            )
+            self._momentum_b.append(
+                ExpAvg.create(lyr.biases.shape, self.beta)
+            )
 
         return super().__call__(network, x, y)

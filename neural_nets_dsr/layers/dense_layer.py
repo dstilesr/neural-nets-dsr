@@ -1,9 +1,10 @@
 import numpy as np
 from typing import Union
-from . import activations
+from .. import activations
+from .base import BaseLayer
 
 
-class NetworkLayer:
+class DenseLayer(BaseLayer):
     """
     Class to represent a layer of a neural network.
     """
@@ -39,13 +40,7 @@ class NetworkLayer:
         :param scale: Scale factor for initial weights.
         :return:
         """
-        if isinstance(activation, activations.ActivationFunc):
-            act = activation
-        elif activation in activations.ACTIVATIONS_NAMES.keys():
-            act = activations.ACTIVATIONS_NAMES[activation]
-        else:
-            raise ValueError("Unknown activation function!")
-
+        act = cls.get_activation(activation)
         np.random.seed(seed)
         obj = cls(
             w=np.random.randn(num_neurons, prev_layer_neurons) * scale,

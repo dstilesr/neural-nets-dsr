@@ -1,11 +1,12 @@
 import numpy as np
-from typing import Union
+from typing import Union, List
 from ..network import NeuralNet
 from ..cost_functions import CostFunction
-from .minibatch_gradient_descent import MiniBatchGDL2
+from ..utils import ExpAvgAccumulator as ExpAvg
+from .regularized_gradient_descent import GradientDescentL2
 
 
-class AdamOptimizer(MiniBatchGDL2):
+class AdamOptimizer(GradientDescentL2):
     """
     Mini batch gradient descent with momentum.
     """
@@ -15,6 +16,7 @@ class AdamOptimizer(MiniBatchGDL2):
             epochs: int = 600,
             learning_rate: float = 0.1,
             l2_param: float = 0.025,
+            axis: int = 1,
             batch_size: int = 512,
             beta_momentum: float = 0.9,
             beta_rms: float = 0.99,
@@ -26,6 +28,7 @@ class AdamOptimizer(MiniBatchGDL2):
         :param epochs:
         :param learning_rate:
         :param l2_param:
+        :param axis:
         :param batch_size:
         :param beta_momentum: Beta for momentum parameter.
         :param beta_rms: Beta for RMS.
@@ -37,18 +40,19 @@ class AdamOptimizer(MiniBatchGDL2):
         super().__init__(
             cost_func,
             epochs,
+            batch_size,
+            axis,
             learning_rate,
             l2_param,
-            batch_size,
             verbose=verbose
         )
         self._batch_size = batch_size
         self._beta_mom = beta_momentum
         self._beta_rms = beta_rms
-        self._momentum_b = []
-        self._rms_b = []
-        self._momentum_w = []
-        self._rms_w = []
+        self._momentum_b: List[ExpAvg] = []
+        self._rms_b: List[ExpAvg] = []
+        self._momentum_w: List[ExpAvg] = []
+        self._rms_w: List[ExpAvg] = []
         self._epsilon = epsilon
         self.__iter = 0
 
@@ -77,31 +81,11 @@ class AdamOptimizer(MiniBatchGDL2):
         :param lyr_num:
         :return:
         """
-        self._momentum_w[lyr_num] = (
-            self.beta_momentum * self._momentum_w[lyr_num]
-            + (1 - self.beta_momentum) * dw
-        )
-
-        self._momentum_b[lyr_num] = (
-                self.beta_momentum * self._momentum_b[lyr_num]
-                + (1 - self.beta_momentum) * db
-        )
+        self._momentum_w[lyr_num].update_value(dw)
+        self._momentum_b[lyr_num].update_value(db)
         # RMS Param updates
-        self._rms_w[lyr_num] = (
-            self.beta_rms * self._rms_w[lyr_num]
-            + (1 - self.beta_rms) * np.square(dw)
-        )
-
-        self._rms_b[lyr_num] = (
-                self.beta_rms * self._rms_b[lyr_num]
-                + (1 - self.beta_rms) * np.square(db)
-        )
-
-        # Normalization for numerical stability
-        self._momentum_w[lyr_num] /= (1 - self.beta_momentum ** self.__iter)
-        self._momentum_b[lyr_num] /= (1 - self.beta_momentum ** self.__iter)
-        self._rms_w[lyr_num] /= (1 - self.beta_rms ** self.__iter)
-        self._rms_b[lyr_num] /= (1 - self.beta_rms ** self.__iter)
+        self._rms_w[lyr_num].update_value(np.square(dw))
+        self._rms_b[lyr_num].update_value(np.square(db))
 
     def gradient_descent_iteration(
             self,
@@ -131,14 +115,14 @@ class AdamOptimizer(MiniBatchGDL2):
                 w=(
                     lyr.weights
                     - reg_w
-                    - self.learning_rate * self._momentum_w[i] / (
-                        self.epsilon + np.sqrt(self._rms_w[i])
+                    - self.learning_rate * self._momentum_w[i].value / (
+                        self.epsilon + np.sqrt(self._rms_w[i].value)
                     )
                 ),
                 b=(
                     lyr.biases
-                    - self.learning_rate * self._momentum_b[i] / (
-                        self.epsilon + np.sqrt(self._rms_b[i])
+                    - self.learning_rate * self._momentum_b[i].value / (
+                        self.epsilon + np.sqrt(self._rms_b[i].value)
                     )
                 )
             )
@@ -157,9 +141,17 @@ class AdamOptimizer(MiniBatchGDL2):
         :return:
         """
         for lyr in network.layers:
-            self._momentum_w.append(np.zeros(lyr.weights.shape))
-            self._momentum_b.append(np.zeros(lyr.biases.shape))
-            self._rms_w.append(np.zeros(lyr.weights.shape))
-            self._rms_b.append(np.zeros(lyr.biases.shape))
+            self._momentum_w.append(
+                ExpAvg.create(lyr.weights.shape, self.beta_momentum, True)
+            )
+            self._momentum_b.append(
+                ExpAvg.create(lyr.biases.shape, self.beta_momentum, True)
+            )
+            self._rms_w.append(
+                ExpAvg.create(lyr.weights.shape, self.beta_rms, True)
+            )
+            self._rms_b.append(
+                ExpAvg.create(lyr.biases.shape, self.beta_rms, True)
+            )
 
         return super().__call__(network, x, y)

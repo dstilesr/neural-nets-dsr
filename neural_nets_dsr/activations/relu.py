@@ -19,4 +19,4 @@ def relu_derivative(x: T) -> T:
     return x >= 0
 
 
-relu_activation = ActivationFunc(relu, relu_derivative)
+relu_activation = ActivationFunc(relu, relu_derivative, "relu")

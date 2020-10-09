@@ -21,4 +21,4 @@ def sigmoid_derivative(x: T) -> T:
     return sig - np.square(sig)
 
 
-sigmoid_activation = ActivationFunc(sigmoid, sigmoid_derivative)
+sigmoid_activation = ActivationFunc(sigmoid, sigmoid_derivative, "sigmoid")

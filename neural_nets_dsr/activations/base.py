@@ -11,14 +11,17 @@ class ActivationFunc(Callable[[T], T]):
     def __init__(
             self,
             function: Callable[[T], T],
-            gradient: Callable[[T], T]):
+            gradient: Callable[[T], T],
+            name: str):
         """
 
         :param function: Activation function.
         :param gradient: Derivative of activation function.
+        :param name: Name of the function.
         """
         self.__function = function
         self.__gradient = gradient
+        self.__name = name
 
     @property
     def gradient(self) -> Callable[[T], T]:
@@ -27,6 +30,14 @@ class ActivationFunc(Callable[[T], T]):
         :return:
         """
         return self.__gradient
+
+    @property
+    def name(self) -> str:
+        """
+        Name of the function.
+        :return:
+        """
+        return self.__name
 
     def __call__(self, inputs: T) -> T:
         """

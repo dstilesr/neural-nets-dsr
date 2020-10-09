@@ -8,3 +8,5 @@ COST_NAMES = {
     "multiclass_logistic": mc_logistic_cost,
     "mse": mean_sq_error
 }
+
+AVAILABLE_COST_FUNCS = list(COST_NAMES.keys())
