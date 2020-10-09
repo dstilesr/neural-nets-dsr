@@ -1,7 +1,8 @@
 import numpy as np
-from typing import Union
+from typing import Union, List
 from ..network import NeuralNet
 from ..cost_functions import CostFunction
+from ..utils import ExpAvgAccumulator as ExpAvg
 from .regularized_gradient_descent import GradientDescentL2
 
 
@@ -42,8 +43,8 @@ class GradientDescentWithMomentum(GradientDescentL2):
         )
         self._batch_size = batch_size
         self._beta = beta
-        self._momentum_b = []
-        self._momentum_w = []
+        self._momentum_b: List[ExpAvg] = []
+        self._momentum_w: List[ExpAvg] = []
 
     @property
     def beta(self) -> float:
@@ -64,20 +65,14 @@ class GradientDescentWithMomentum(GradientDescentL2):
             lyr = self._network.layers[i]
             dw, db, da = lyr.back_prop(da)
 
-            self._momentum_b[i] = (
-                    self.beta * self._momentum_b[i]
-                    + (1 - self.beta) * db
-            )
-            self._momentum_w[i] = (
-                    self.beta * self._momentum_w[i]
-                    + (1 - self.beta) * dw
-            )
+            self._momentum_b[i].update_value(db)
+            self._momentum_w[i].update_value(dw)
 
             reg_w = self.l2_param * lyr.weights
             lyr.set_weights(
                 w=lyr.weights
-                    - self.learning_rate * self._momentum_w[i] - reg_w,
-                b=lyr.biases - self.learning_rate * self._momentum_b[i]
+                    - self.learning_rate * self._momentum_w[i].value - reg_w,
+                b=lyr.biases - self.learning_rate * self._momentum_b[i].value
             )
         return cost
 
@@ -94,7 +89,11 @@ class GradientDescentWithMomentum(GradientDescentL2):
         :return:
         """
         for lyr in network.layers:
-            self._momentum_w.append(np.zeros(lyr.weights.shape))
-            self._momentum_b.append(np.zeros(lyr.biases.shape))
+            self._momentum_w.append(
+                ExpAvg.create(lyr.weights.shape, self.beta)
+            )
+            self._momentum_b.append(
+                ExpAvg.create(lyr.biases.shape, self.beta)
+            )
 
         return super().__call__(network, x, y)
