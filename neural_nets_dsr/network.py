@@ -1,6 +1,7 @@
 import numpy as np
 from typing import List, Union
 from .layers import DenseLayer
+from .layers.base import BaseLayer
 from .activations import ActivationFunc
 
 
@@ -9,7 +10,7 @@ class NeuralNet:
     Class to represent a Neural Network.
     """
 
-    def __init__(self, layers: List[DenseLayer]):
+    def __init__(self, layers: List[BaseLayer]):
         self.layers = layers
 
     @classmethod
@@ -20,7 +21,7 @@ class NeuralNet:
             xavier: bool = False,
             seed: int = 321):
         """
-        Initializes the network.
+        Initializes the network with dense, fully connected layers.
         :param layer_dims: Dimensions of the network layers. First entry is
             the number of input features.
         :param activations: Activation functions for each layer.

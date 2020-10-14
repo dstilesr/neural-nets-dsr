@@ -63,8 +63,9 @@ class DropoutLayer(BaseLayer):
         :param da:
         :return:
         """
-        # TODO
-        raise NotImplementedError
+        daprev = (self._mask * da) / self.__keep_rate
+        self._mask = None
+        return None, None, daprev
 
     def set_weights(self, *args, **kwargs):
         """

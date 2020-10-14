@@ -66,6 +66,10 @@ class FullBatchIterator(BaseBatchIter):
         """
         return self._total_epochs
 
+    @property
+    def current_epoch(self) -> int:
+        return self._current_epoch
+
     def reset_iterator(self):
         """
         Restart the iterator.
@@ -136,6 +140,10 @@ class MiniBatchIterator(BaseBatchIter):
     def batch_size(self) -> int:
         return self._batch_size
 
+    @property
+    def current_epoch(self) -> int:
+        return self._current_epoch
+
     def reset_iterator(self):
         self._current_index = 0
         self._current_epoch = 0
@@ -159,12 +167,17 @@ class MiniBatchIterator(BaseBatchIter):
         return inds
 
     def __next__(self):
+        """
+        Give the next minibatch of examples.
+        :return:
+        """
         inds = self.next_indices()
         if self._ndim == 2:
             if self.axis == 0:
                 return self._x[inds, :], self._y[inds, :]
             else:
                 return self._x[:, inds], self._y[:, inds]
+
         elif self._ndim == 4:
             assert self.axis == 0
             return self._x[inds, :, :, :], self._y[:, inds]
