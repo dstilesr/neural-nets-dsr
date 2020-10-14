@@ -30,11 +30,11 @@ class BaseLayer(ABC):
     def forward_prop(
             self,
             x: np.ndarray,
-            keep_cache: bool = False) -> np.ndarray:
+            train_mode: bool = False) -> np.ndarray:
         """
         Forward Propagation.
         :param x:
-        :param keep_cache:
+        :param train_mode:
         :return:
         """
         pass

@@ -80,15 +80,15 @@ class BatchNorm(BaseLayer):
     def forward_prop(
             self,
             x: np.ndarray,
-            keep_cache: bool = False) -> np.ndarray:
+            train_mode: bool = False) -> np.ndarray:
         """
         Forward-propagates batch normalization.
         :param x:
-        :param keep_cache:
+        :param train_mode:
         :return:
         """
 
-        if keep_cache:
+        if train_mode:
             mu = np.mean(x, axis=self.axis, keepdims=True)
             sigma_sq = np.var(x, axis=self.axis, keepdims=True)
             self._mu_accum.update_value(mu)

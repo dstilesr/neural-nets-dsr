@@ -158,11 +158,11 @@ class Convolution2D(BaseLayer):
     def forward_prop(
             self,
             x: np.ndarray,
-            keep_cache: bool = False) -> np.ndarray:
+            train_mode: bool = False) -> np.ndarray:
         """
         Forward propagation on this layer.
         :param x:
-        :param keep_cache:
+        :param train_mode:
         :return:
         """
         z = np.zeros(self.output_shape(x.shape))
@@ -172,7 +172,7 @@ class Convolution2D(BaseLayer):
         z += self.biases
         a = self.activation(z)
 
-        if keep_cache:
+        if train_mode:
             self._cache["a_prev"] = x
             self._cache["a"] = a
             self._cache["a_prev_pad"] = self.pad(x)
@@ -267,12 +267,12 @@ class FlattenLayer(BaseLayer):
     def forward_prop(
             self,
             x: np.ndarray,
-            keep_cache: bool = False) -> np.ndarray:
+            train_mode: bool = False) -> np.ndarray:
         """
         Flattens the output of a convolutional layer into the shape
         (num_features, num_examples).
         :param x: Output of convolutional layer.
-        :param keep_cache:
+        :param train_mode:
         :return:
         """
         self._input_shape = x.shape

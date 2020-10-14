@@ -55,16 +55,16 @@ class NeuralNet:
     def compute_predictions(
             self,
             x: np.ndarray,
-            keep_caches: bool = False) -> np.ndarray:
+            train_mode: bool = False) -> np.ndarray:
         """
         Computes predictions by applying forward propagation.
         :param x: Array of inputs. Columns represent individual examples.
-        :param keep_caches: Keep activation caches in layers for backprop.
+        :param train_mode: Keep activation caches in layers for backprop.
         :return: Array of predictions.
         """
         out = x
         for layer in self.layers:
-            out = layer.forward_prop(out, keep_cache=keep_caches)
+            out = layer.forward_prop(out, train_mode=train_mode)
         return out
 
     def append(self, other):
