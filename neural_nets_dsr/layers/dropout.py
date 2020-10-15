@@ -31,11 +31,27 @@ class DropoutLayer(BaseLayer):
 
     @property
     def dropout_rate(self) -> float:
+        """
+        Rate at which the layer zeroes out connections.
+        :return:
+        """
         return self.__drop_rate
 
     @property
     def input_shape(self) -> List[int]:
+        """
+        Shape of layer inputs. Examples axis must have length 1.
+        :return:
+        """
         return self.__input_shape
+
+    @property
+    def weights(self) -> np.ndarray:
+        return np.zeros((1, 1))
+
+    @property
+    def biases(self) -> np.ndarray:
+        return np.zeros((1, 1))
 
     def forward_prop(
             self,
@@ -65,7 +81,7 @@ class DropoutLayer(BaseLayer):
         """
         daprev = (self._mask * da) / self.__keep_rate
         self._mask = None
-        return None, None, daprev
+        return np.zeros((1, 1)), np.zeros((1, 1)), daprev
 
     def set_weights(self, *args, **kwargs):
         """
