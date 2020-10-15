@@ -45,14 +45,6 @@ class DropoutLayer(BaseLayer):
         """
         return self.__input_shape
 
-    @property
-    def weights(self) -> np.ndarray:
-        return np.zeros((1, 1))
-
-    @property
-    def biases(self) -> np.ndarray:
-        return np.zeros((1, 1))
-
     def forward_prop(
             self,
             x: np.ndarray,

@@ -32,14 +32,26 @@ class Convolution2D(BaseLayer):
 
     @property
     def filters(self) -> np.ndarray:
+        """
+        Read-only filters of the layer.
+        :return:
+        """
         return self.__filters
 
     @property
     def weights(self) -> np.ndarray:
-        return self.__filters
+        """
+        Alias for filters property.
+        :return:
+        """
+        return self.filters
 
     @property
     def biases(self) -> np.ndarray:
+        """
+        Read-only biases for the layer.
+        :return:
+        """
         return self.__biases
 
     @property

@@ -14,8 +14,8 @@ class CostFunction(F):
             gradient: Callable[[np.ndarray, np.ndarray], np.ndarray]):
         """
 
-        :param function:
-        :param gradient:
+        :param function: Cost function.
+        :param gradient: Function to compute derivatives of the cost function.
         """
         self.__function = function
         self.__gradient = gradient
