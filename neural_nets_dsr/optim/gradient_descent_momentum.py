@@ -74,7 +74,7 @@ class GradientDescentWithMomentum(GradientDescentL2):
             self._momentum_b[i].update_value(db)
             self._momentum_w[i].update_value(dw)
 
-            reg_w = self.l2_param * lyr.weights
+            reg_w = self.learning_rate * self.l2_param * lyr.weights
             lyr.set_weights(
                 w=lyr.weights
                     - self.learning_rate * self._momentum_w[i].value - reg_w,

@@ -1,5 +1,4 @@
 import numpy as np
-from scipy import signal
 from typing import Tuple, Union
 from .conv_utils import full_conv
 from .base import BaseLayer, ActivationFunc
@@ -149,25 +148,6 @@ class Convolution2D(BaseLayer):
             x_pad = x
         return x_pad
 
-    def convolve_filter(self, filter_index: int, x: np.ndarray) -> np.ndarray:
-        """
-        Convolves a given filter with the input.
-        :param filter_index: Index of filter to convolve.
-        :param x: Array of shape (num_examples, height, width, channels).
-        :return:
-        """
-        output_shape = self.output_shape(x.shape)[:-1]
-        out = np.zeros(output_shape)
-
-        for ex in range(x.shape[0]):
-            for i in range(x.shape[-1]):
-                out[ex, :, :] += signal.correlate2d(
-                    x[ex, :, :, i],
-                    self.filters[:, :, i, filter_index],
-                    mode=self.padding
-                )
-        return out
-
     def forward_prop(
             self,
             x: np.ndarray,
@@ -178,10 +158,8 @@ class Convolution2D(BaseLayer):
         :param train_mode:
         :return:
         """
-        # z = np.zeros(self.output_shape(x.shape))
-        # for f in range(self.filters.shape[-1]):
-        #     z[:, :, :, f] = self.convolve_filter(f, x)
-        z = full_conv(x, self.filters)
+        xpad = self.pad(x)
+        z = full_conv(xpad, self.filters)
 
         z += self.biases
         a = self.activation(z)
@@ -189,7 +167,7 @@ class Convolution2D(BaseLayer):
         if train_mode:
             self._cache["a_prev"] = x
             self._cache["a"] = a
-            self._cache["a_prev_pad"] = self.pad(x)
+            self._cache["a_prev_pad"] = xpad
 
         return a
 

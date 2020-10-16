@@ -1,14 +1,14 @@
 import numpy as np
 from typing import Union, List
 from ..network import NeuralNet
-from ..cost_functions import CostFunction
+from ..cost_functions.base import CostFunction
 from ..utils import ExpAvgAccumulator as ExpAvg
 from .regularized_gradient_descent import GradientDescentL2
 
 
 class AdamOptimizer(GradientDescentL2):
     """
-    Mini batch gradient descent with momentum.
+    Adaptive Momentum (ADAM) Optimizer.
     """
 
     def __init__(
@@ -110,7 +110,7 @@ class AdamOptimizer(GradientDescentL2):
             dw, db, da = lyr.back_prop(da)
             self.update_momentum_rms(dw, db, i)
 
-            reg_w = self.l2_param * lyr.weights
+            reg_w = self.learning_rate * self.l2_param * lyr.weights
             lyr.set_weights(
                 w=(
                     lyr.weights

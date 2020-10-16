@@ -1,7 +1,7 @@
 import numpy as np
 from typing import Union
-from ..cost_functions import CostFunction
 from .gradient_descent import GradientDescent
+from ..cost_functions.base import CostFunction
 
 
 class GradientDescentL2(GradientDescent):
@@ -41,6 +41,10 @@ class GradientDescentL2(GradientDescent):
 
     @property
     def l2_param(self) -> float:
+        """
+        L2 regularization parameter.
+        :return:
+        """
         return self.__l2_param
 
     def gradient_descent_iteration(self, x: np.ndarray, y: np.ndarray) -> float:
@@ -62,7 +66,7 @@ class GradientDescentL2(GradientDescent):
 
             reg_w = self.l2_param * lyr.weights
             lyr.set_weights(
-                w=lyr.weights - self.learning_rate * dw - reg_w,
+                w=lyr.weights - self.learning_rate * (dw + reg_w),
                 b=lyr.biases - self.learning_rate * db
             )
         return cost
