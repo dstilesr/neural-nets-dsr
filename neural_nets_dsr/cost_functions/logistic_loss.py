@@ -17,4 +17,4 @@ def logistic_loss_grad(y_true: np.ndarray, y_pred: np.ndarray) -> np.ndarray:
     return -y_true / y_pred + (1. - y_true) / (1. - y_pred)
 
 
-logistic_cost = CostFunction(logistic_cost_func, logistic_loss_grad)
+logistic_cost = CostFunction(logistic_cost_func, logistic_loss_grad, "logistic")

@@ -22,4 +22,4 @@ def mse_gradient(y_true: np.ndarray, y_pred: np.ndarray) -> np.ndarray:
     return -2. * (y_true - y_pred)
 
 
-mean_sq_error = CostFunction(mse_cost, mse_gradient)
+mean_sq_error = CostFunction(mse_cost, mse_gradient, "mse")
