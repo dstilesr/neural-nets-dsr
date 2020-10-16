@@ -104,7 +104,7 @@ class GradientDescent(Optimizer):
         :param lyr_index: Index of layer within network.
         :return:
         """
-        return w - self.learning_rate * dw, db - self.learning_rate * db
+        return w - self.learning_rate * dw, b - self.learning_rate * db
 
     def gradient_descent_iteration(
             self,
@@ -127,7 +127,7 @@ class GradientDescent(Optimizer):
             lyr = self._network.layers[i]
             dw, db, da = lyr.back_prop(da)
             wnew, bnew = self.get_updates(lyr.weights, lyr.biases, dw, db, i)
-            lyr.set_weights(w=wnew, b=bnew)
+            self._network.layers[i].set_weights(w=wnew, b=bnew)
         return cost
 
     def __call__(
