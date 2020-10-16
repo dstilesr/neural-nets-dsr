@@ -37,5 +37,7 @@ The `neural_nets_dsr` package contains the following subpackages and modules:
 - Convolution backprop not always working.
 - Doubts about batchnorm derivative computation.
 - Numerical stability.
+- Strange error in setup when cythonizing: 
+  `error: each element of 'ext_modules' option must be an Extension instance or 2-tuple`
 
 [Back to top](#neural-nets)

@@ -1,6 +1,7 @@
 import numpy as np
 from scipy import signal
 from typing import Tuple, Union
+from .conv_utils import full_conv
 from .base import BaseLayer, ActivationFunc
 
 
@@ -177,9 +178,10 @@ class Convolution2D(BaseLayer):
         :param train_mode:
         :return:
         """
-        z = np.zeros(self.output_shape(x.shape))
-        for f in range(self.filters.shape[-1]):
-            z[:, :, :, f] = self.convolve_filter(f, x)
+        # z = np.zeros(self.output_shape(x.shape))
+        # for f in range(self.filters.shape[-1]):
+        #     z[:, :, :, f] = self.convolve_filter(f, x)
+        z = full_conv(x, self.filters)
 
         z += self.biases
         a = self.activation(z)
@@ -260,22 +262,6 @@ class FlattenLayer(BaseLayer):
     def __init__(self):
         self._input_shape = None
 
-    @property
-    def weights(self) -> np.ndarray:
-        """
-        Dummy property for compatibility
-        :return:
-        """
-        return np.zeros((1, 1))
-
-    @property
-    def biases(self) -> np.ndarray:
-        """
-        Dummy property for compatibility
-        :return:
-        """
-        return np.zeros((1, 1))
-
     def forward_prop(
             self,
             x: np.ndarray,
@@ -293,11 +279,17 @@ class FlattenLayer(BaseLayer):
 
     def back_prop(self, da: np.ndarray):
         """
-
+        DUMMY
         :param da:
         :return:
         """
         return 0.0, 0.0, da.T.reshape(self._input_shape)
 
     def set_weights(self, *args, **kwargs):
+        """
+        DUMMY
+        :param args:
+        :param kwargs:
+        :return:
+        """
         pass
