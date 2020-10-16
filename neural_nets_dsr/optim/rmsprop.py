@@ -1,6 +1,6 @@
 import numpy as np
-from typing import Union, List
 from ..network import NeuralNet
+from typing import Union, List, Tuple
 from ..cost_functions.base import CostFunction
 from ..utils import ExpAvgAccumulator as ExpAvg
 from .regularized_gradient_descent import GradientDescentL2
@@ -59,38 +59,34 @@ class RMSProp(GradientDescentL2):
         """
         return self.__beta
 
-    def gradient_descent_iteration(
+    def get_updates(
             self,
-            x: np.ndarray,
-            y: np.ndarray) -> float:
+            w: np.ndarray,
+            b: np.ndarray,
+            dw: np.ndarray,
+            db: np.ndarray,
+            lyr_index: int = -1) -> Tuple[np.ndarray, np.ndarray]:
         """
-        Performs iteration of gradient descent with momentum.
-        :param x:
-        :param y:
+
+        :param w:
+        :param b:
+        :param dw:
+        :param db:
+        :param lyr_index:
         :return:
         """
-        if self._network is None:
-            raise NotImplementedError("No network selected!")
+        self.__rms_w[lyr_index].update_value(np.square(dw))
+        self.__rms_b[lyr_index].update_value(np.square(db))
+        wreg = self.l2_param * w
 
-        y_pred = self._network.compute_predictions(x, True)
-        cost = self.cost_func(y, y_pred)
-        da = self.cost_func.gradient(y, y_pred)
-
-        for i in reversed(range(len(self._network.layers))):
-            lyr = self._network.layers[i]
-            dw, db, da = lyr.back_prop(da)
-
-            self.__rms_b[i].update_value(np.square(db))
-            self.__rms_w[i].update_value(np.square(dw))
-            denom_b = db / np.sqrt(self.__rms_b[i].value + self.__epsilon)
-            denom_w = dw / np.sqrt(self.__rms_w[i].value + self.__epsilon)
-
-            reg_w = self.learning_rate * self.l2_param * lyr.weights
-            lyr.set_weights(
-                w=lyr.weights - self.learning_rate * dw / denom_w - reg_w,
-                b=lyr.biases - self.learning_rate * db / denom_b
-            )
-        return cost
+        wnew = w - self.learning_rate * (
+                dw / np.sqrt(self.__rms_w[lyr_index].value + self.__epsilon)
+                + wreg
+        )
+        bnew = b - self.learning_rate * (
+                db / np.sqrt(self.__rms_b[lyr_index].value + self.__epsilon)
+        )
+        return wnew, bnew
 
     def __call__(
             self,

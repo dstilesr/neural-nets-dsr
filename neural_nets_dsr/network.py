@@ -13,6 +13,14 @@ class NeuralNet:
     def __init__(self, layers: List[BaseLayer]):
         self.layers = layers
 
+    @property
+    def depth(self) -> int:
+        """
+        Number of layers in the network (not including input).
+        :return:
+        """
+        return len(self.layers)
+
     @classmethod
     def initialize(
             cls,

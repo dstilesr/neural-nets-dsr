@@ -3,13 +3,14 @@
 ## Contents
 * [About](#about)
 * [Repository Contents](#repository-contents)
+* [Organization](#organization)
 * [Branch 'Policies'](#branch-policies)
 * [Current Issues](#current-issues)
 
 ## About
 This repo contains some personal implementations of neural networks done for
 practice implementing backprop and optimization from scratch (using only numpy).
-
+Currently all networks are sequential.
 
 ## Branch 'Policies'
 For development, push to the `develop` branch, then merge with master when ready.
@@ -32,6 +33,11 @@ The `neural_nets_dsr` package contains the following subpackages and modules:
 
 - Finally, the `utils.py` module is for miscellaneous utility functions and
   classes.
+
+## Organization
+- Every activation and cost function should 'know' how to compute its own gradient.
+- Each layer should know how to forward and back propagate through itself.
+- Every optimizer should know how to perform updates on weights and biases.
 
 ## Current Issues
 - Convolution backprop not always working.

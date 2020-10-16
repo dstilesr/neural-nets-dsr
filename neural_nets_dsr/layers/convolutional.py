@@ -60,10 +60,18 @@ class Convolution2D(BaseLayer):
 
     @property
     def activation(self) -> ActivationFunc:
+        """
+        Layer's activation function.
+        :return:
+        """
         return self.__activation
 
     @property
     def padding(self) -> str:
+        """
+        Layer's padding strategy.
+        :return:
+        """
         return self.__padding
 
     @classmethod

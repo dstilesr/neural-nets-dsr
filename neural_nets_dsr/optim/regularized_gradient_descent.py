@@ -1,5 +1,5 @@
 import numpy as np
-from typing import Union
+from typing import Union, Tuple
 from .gradient_descent import GradientDescent
 from ..cost_functions.base import CostFunction
 
@@ -47,26 +47,22 @@ class GradientDescentL2(GradientDescent):
         """
         return self.__l2_param
 
-    def gradient_descent_iteration(self, x: np.ndarray, y: np.ndarray) -> float:
+    def get_updates(
+            self,
+            w: np.ndarray,
+            b: np.ndarray,
+            dw: np.ndarray,
+            db: np.ndarray,
+            lyr_index: int = -1) -> Tuple[np.ndarray, np.ndarray]:
         """
-        Does a single iteration of gradient descent
-        :param x: Training set features.
-        :param y: Training set labels.
-        :return: Cost before the backprop.
+        Compute parameter updates for GD with L2 regularization.
+        :param w:
+        :param b:
+        :param dw:
+        :param db:
+        :param lyr_index:
+        :return:
         """
-        if self._network is None:
-            raise NotImplementedError("No network selected!")
-
-        y_pred = self._network.compute_predictions(x, True)
-        cost = self.cost_func(y, y_pred)
-        da = self.cost_func.gradient(y, y_pred)
-
-        for lyr in self._network.layers[::-1]:
-            dw, db, da = lyr.back_prop(da)
-
-            reg_w = self.l2_param * lyr.weights
-            lyr.set_weights(
-                w=lyr.weights - self.learning_rate * (dw + reg_w),
-                b=lyr.biases - self.learning_rate * db
-            )
-        return cost
+        wgrad = self.learning_rate * (dw + self.l2_param * w)
+        bgrad = self.learning_rate * db
+        return w - wgrad, b - bgrad

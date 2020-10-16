@@ -1,6 +1,6 @@
 import numpy as np
-from typing import Union, List
 from ..network import NeuralNet
+from typing import Union, List, Tuple
 from ..cost_functions import CostFunction
 from ..utils import ExpAvgAccumulator as ExpAvg
 from .regularized_gradient_descent import GradientDescentL2
@@ -43,44 +43,36 @@ class GradientDescentWithMomentum(GradientDescentL2):
         )
         self._batch_size = batch_size
         self._beta = beta
-        self._momentum_b: List[ExpAvg] = []
-        self._momentum_w: List[ExpAvg] = []
+        self._mom_b: List[ExpAvg] = []
+        self._mom_w: List[ExpAvg] = []
 
     @property
     def beta(self) -> float:
         return self._beta
 
-    def gradient_descent_iteration(
+    def get_updates(
             self,
-            x: np.ndarray,
-            y: np.ndarray) -> float:
+            w: np.ndarray,
+            b: np.ndarray,
+            dw: np.ndarray,
+            db: np.ndarray,
+            lyr_index: int = -1) -> Tuple[np.ndarray, np.ndarray]:
         """
-        Performs iteration of gradient descent with momentum.
-        :param x:
-        :param y:
+
+        :param w:
+        :param b:
+        :param dw:
+        :param db:
+        :param lyr_index:
         :return:
         """
-        if self._network is None:
-            raise NotImplementedError("No network selected!")
+        self._mom_w[lyr_index].update_value(dw)
+        self._mom_b[lyr_index].update_value(db)
 
-        y_pred = self._network.compute_predictions(x, True)
-        cost = self.cost_func(y, y_pred)
-        da = self.cost_func.gradient(y, y_pred)
-
-        for i in reversed(range(len(self._network.layers))):
-            lyr = self._network.layers[i]
-            dw, db, da = lyr.back_prop(da)
-
-            self._momentum_b[i].update_value(db)
-            self._momentum_w[i].update_value(dw)
-
-            reg_w = self.learning_rate * self.l2_param * lyr.weights
-            lyr.set_weights(
-                w=lyr.weights
-                    - self.learning_rate * self._momentum_w[i].value - reg_w,
-                b=lyr.biases - self.learning_rate * self._momentum_b[i].value
-            )
-        return cost
+        wreg = self.l2_param * w
+        wnew = w - self.learning_rate * (self._mom_w[lyr_index].value + wreg)
+        bnew = b - self.learning_rate * self._mom_b[lyr_index].value
+        return wnew, bnew
 
     def __call__(
             self,
@@ -95,10 +87,10 @@ class GradientDescentWithMomentum(GradientDescentL2):
         :return:
         """
         for lyr in network.layers:
-            self._momentum_w.append(
+            self._mom_w.append(
                 ExpAvg.create(lyr.weights.shape, self.beta)
             )
-            self._momentum_b.append(
+            self._mom_b.append(
                 ExpAvg.create(lyr.biases.shape, self.beta)
             )
 
