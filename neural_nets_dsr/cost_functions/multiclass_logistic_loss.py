@@ -22,4 +22,4 @@ def mc_logloss_grad(y_true: np.ndarray, y_pred: np.ndarray) -> np.ndarray:
     return -y_true / y_pred
 
 
-mc_logistic_cost = CostFunction(mc_logloss, mc_logloss_grad)
+mc_logistic_cost = CostFunction(mc_logloss, mc_logloss_grad, "multiclass_logistic")

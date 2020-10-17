@@ -1,14 +1,14 @@
 import numpy as np
-from typing import Union, List
 from ..network import NeuralNet
-from ..cost_functions import CostFunction
+from typing import Union, List, Tuple
+from ..cost_functions.base import CostFunction
 from ..utils import ExpAvgAccumulator as ExpAvg
 from .regularized_gradient_descent import GradientDescentL2
 
 
 class AdamOptimizer(GradientDescentL2):
     """
-    Mini batch gradient descent with momentum.
+    Adaptive Momentum (ADAM) Optimizer.
     """
 
     def __init__(
@@ -87,46 +87,35 @@ class AdamOptimizer(GradientDescentL2):
         self._rms_w[lyr_num].update_value(np.square(dw))
         self._rms_b[lyr_num].update_value(np.square(db))
 
-    def gradient_descent_iteration(
+    def get_updates(
             self,
-            x: np.ndarray,
-            y: np.ndarray) -> float:
+            w: np.ndarray,
+            b: np.ndarray,
+            dw: np.ndarray,
+            db: np.ndarray,
+            lyr_index: int = -1) -> Tuple[np.ndarray, np.ndarray]:
         """
-
-        :param x:
-        :param y:
-        :return:
+        Compute ADAM parameter updates.
+        :param w: Weights of the layer.
+        :param b: Biases of the layer.
+        :param dw: Gradient wrt weights.
+        :param db: Gradient wrt biases.
+        :param lyr_index: Index of the layer in the network.
+        :return: The updated weights and biases.
         """
-        self.__iter += 1
-        if self._network is None:
-            raise NotImplementedError("No network selected!")
+        self.update_momentum_rms(dw, db, lyr_index)
+        wreg = self.l2_param * w
 
-        y_pred = self._network.compute_predictions(x, True)
-        cost = self.cost_func(y, y_pred)
-        da = self.cost_func.gradient(y, y_pred)
-
-        for i in reversed(range(len(self._network.layers))):
-            lyr = self._network.layers[i]
-            dw, db, da = lyr.back_prop(da)
-            self.update_momentum_rms(dw, db, i)
-
-            reg_w = self.l2_param * lyr.weights
-            lyr.set_weights(
-                w=(
-                    lyr.weights
-                    - reg_w
-                    - self.learning_rate * self._momentum_w[i].value / (
-                        self.epsilon + np.sqrt(self._rms_w[i].value)
-                    )
-                ),
-                b=(
-                    lyr.biases
-                    - self.learning_rate * self._momentum_b[i].value / (
-                        self.epsilon + np.sqrt(self._rms_b[i].value)
-                    )
-                )
-            )
-        return cost
+        wup = (self.learning_rate * (
+            self._momentum_w[lyr_index].value
+            / np.sqrt(self.epsilon + self._rms_w[lyr_index].value)
+            + wreg
+        ))
+        bup = (self.learning_rate * (
+                self._momentum_b[lyr_index].value
+                / np.sqrt(self.epsilon + self._rms_b[lyr_index].value)
+        ))
+        return w - wup, b - bup
 
     def __call__(
             self,

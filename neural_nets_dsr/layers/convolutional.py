@@ -1,7 +1,7 @@
 import numpy as np
-from scipy import signal
 from typing import Tuple, Union
 from .base import BaseLayer, ActivationFunc
+from .conv_utils import full_conv, conv_backprop
 
 
 class Convolution2D(BaseLayer):
@@ -32,14 +32,26 @@ class Convolution2D(BaseLayer):
 
     @property
     def filters(self) -> np.ndarray:
+        """
+        Read-only filters of the layer.
+        :return:
+        """
         return self.__filters
 
     @property
     def weights(self) -> np.ndarray:
-        return self.__filters
+        """
+        Alias for filters property.
+        :return:
+        """
+        return self.filters
 
     @property
     def biases(self) -> np.ndarray:
+        """
+        Read-only biases for the layer.
+        :return:
+        """
         return self.__biases
 
     @property
@@ -48,10 +60,18 @@ class Convolution2D(BaseLayer):
 
     @property
     def activation(self) -> ActivationFunc:
+        """
+        Layer's activation function.
+        :return:
+        """
         return self.__activation
 
     @property
     def padding(self) -> str:
+        """
+        Layer's padding strategy.
+        :return:
+        """
         return self.__padding
 
     @classmethod
@@ -136,46 +156,26 @@ class Convolution2D(BaseLayer):
             x_pad = x
         return x_pad
 
-    def convolve_filter(self, filter_index: int, x: np.ndarray) -> np.ndarray:
-        """
-        Convolves a given filter with the input.
-        :param filter_index: Index of filter to convolve.
-        :param x: Array of shape (num_examples, height, width, channels).
-        :return:
-        """
-        output_shape = self.output_shape(x.shape)[:-1]
-        out = np.zeros(output_shape)
-
-        for ex in range(x.shape[0]):
-            for i in range(x.shape[-1]):
-                out[ex, :, :] += signal.correlate2d(
-                    x[ex, :, :, i],
-                    self.filters[:, :, i, filter_index],
-                    mode=self.padding
-                )
-        return out
-
     def forward_prop(
             self,
             x: np.ndarray,
-            keep_cache: bool = False) -> np.ndarray:
+            train_mode: bool = False) -> np.ndarray:
         """
         Forward propagation on this layer.
         :param x:
-        :param keep_cache:
+        :param train_mode:
         :return:
         """
-        z = np.zeros(self.output_shape(x.shape))
-        for f in range(self.filters.shape[-1]):
-            z[:, :, :, f] = self.convolve_filter(f, x)
+        xpad = self.pad(x)
+        z = full_conv(xpad, self.filters)
 
         z += self.biases
         a = self.activation(z)
 
-        if keep_cache:
+        if train_mode:
             self._cache["a_prev"] = x
-            self._cache["a"] = a
-            self._cache["a_prev_pad"] = self.pad(x)
+            self._cache["z"] = z
+            self._cache["a_prev_pad"] = xpad
 
         return a
 
@@ -187,23 +187,12 @@ class Convolution2D(BaseLayer):
         :param da:
         :return:
         """
-        outshape = self.output_shape(self._cache["a_prev"].shape)
         filt_h, filt_w = self.filters.shape[:2]
-        dw = np.zeros_like(self.filters)
-        da_prev_pd = np.zeros_like(self._cache["a_prev_pad"])
-
-        for ex in range(dz.shape[0]):
-            for i in range(outshape[1]):
-                for j in range(outshape[2]):
-                    for c in range(self.filters.shape[-1]):
-                        a_slice = self._cache["a_prev_pad"][
-                                  ex, i:(i + filt_h), j:(j + filt_w), :
-                                  ]
-                        dw[:, :, :, c] += a_slice * dz[ex, i, j, c]
-
-                        da_prev_pd[ex, i:(i + filt_h), j:(j + filt_w), :] += (
-                            self.filters[:, :, :, c] * dz[ex, i, j, c]
-                        )
+        dw, da_prev_pd = conv_backprop(
+            dz,
+            self.filters,
+            self._cache["a_prev_pad"]
+        )
 
         if self.padding == "same":
             pdx, pdy = filt_h // 2, filt_w // 2
@@ -220,7 +209,7 @@ class Convolution2D(BaseLayer):
         :return: Gradients wrt filters, biases and to previous layer's
             activations.
         """
-        dz = self.activation.gradient(da)
+        dz = self.activation.gradient(self._cache["z"]) * da
         db = np.sum(dz, axis=(1, 2), keepdims=True)
         db = np.mean(db, axis=0, keepdims=False)
         dw, da_prev = self.__compute_dwda(dz)
@@ -248,31 +237,15 @@ class FlattenLayer(BaseLayer):
     def __init__(self):
         self._input_shape = None
 
-    @property
-    def weights(self) -> np.ndarray:
-        """
-        Dummy property for compatibility
-        :return:
-        """
-        return np.zeros((1, 1))
-
-    @property
-    def biases(self) -> np.ndarray:
-        """
-        Dummy property for compatibility
-        :return:
-        """
-        return np.zeros((1, 1))
-
     def forward_prop(
             self,
             x: np.ndarray,
-            keep_cache: bool = False) -> np.ndarray:
+            train_mode: bool = False) -> np.ndarray:
         """
         Flattens the output of a convolutional layer into the shape
         (num_features, num_examples).
         :param x: Output of convolutional layer.
-        :param keep_cache:
+        :param train_mode:
         :return:
         """
         self._input_shape = x.shape
@@ -281,11 +254,17 @@ class FlattenLayer(BaseLayer):
 
     def back_prop(self, da: np.ndarray):
         """
-
+        DUMMY
         :param da:
         :return:
         """
         return 0.0, 0.0, da.T.reshape(self._input_shape)
 
     def set_weights(self, *args, **kwargs):
+        """
+        DUMMY
+        :param args:
+        :param kwargs:
+        :return:
+        """
         pass

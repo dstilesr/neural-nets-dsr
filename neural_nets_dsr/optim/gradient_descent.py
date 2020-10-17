@@ -1,9 +1,9 @@
 import numpy as np
 from . import batch_iter
-from typing import Union
 from .base import Optimizer
+from typing import Union, Tuple
 from ..network import NeuralNet
-from ..cost_functions import CostFunction, COST_NAMES
+from ..cost_functions.base import CostFunction
 
 
 class GradientDescent(Optimizer):
@@ -39,12 +39,7 @@ class GradientDescent(Optimizer):
         self._shuffle = shuffle
         self._axis = axis
 
-        if isinstance(cost_func, CostFunction):
-            self.__cost = cost_func
-        elif cost_func in COST_NAMES.keys():
-            self.__cost = COST_NAMES[cost_func]
-        else:
-            raise ValueError("Unknown cost function!")
+        self.__cost = self.get_cost_func(cost_func)
 
     @property
     def batch_size(self) -> int:
@@ -93,6 +88,24 @@ class GradientDescent(Optimizer):
                 self._shuffle
             )
 
+    def get_updates(
+            self,
+            w: np.ndarray,
+            b: np.ndarray,
+            dw: np.ndarray,
+            db: np.ndarray,
+            lyr_index: int = -1) -> Tuple[np.ndarray, np.ndarray]:
+        """
+        Compute gradient descent updated weights and biases.
+        :param w: Weights of a layer.
+        :param b: Biases of a layer
+        :param dw: Gradient of cost wrt weights.
+        :param db: Gradient of cost wrt biases.
+        :param lyr_index: Index of layer within network.
+        :return: The updated weights and biases.
+        """
+        return w - self.learning_rate * dw, b - self.learning_rate * db
+
     def gradient_descent_iteration(
             self,
             x_batch: np.ndarray,
@@ -110,12 +123,11 @@ class GradientDescent(Optimizer):
         cost = self.cost_func(y_batch, y_pred)
         da = self.cost_func.gradient(y_batch, y_pred)
 
-        for lyr in self._network.layers[::-1]:
+        for i in reversed(range(self._network.depth)):
+            lyr = self._network.layers[i]
             dw, db, da = lyr.back_prop(da)
-            lyr.set_weights(
-                w=lyr.weights - self.learning_rate * dw,
-                b=lyr.biases - self.learning_rate * db
-            )
+            wnew, bnew = self.get_updates(lyr.weights, lyr.biases, dw, db, i)
+            self._network.layers[i].set_weights(w=wnew, b=bnew)
         return cost
 
     def __call__(

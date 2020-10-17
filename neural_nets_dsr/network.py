@@ -1,6 +1,7 @@
 import numpy as np
 from typing import List, Union
 from .layers import DenseLayer
+from .layers.base import BaseLayer
 from .activations import ActivationFunc
 
 
@@ -9,8 +10,16 @@ class NeuralNet:
     Class to represent a Neural Network.
     """
 
-    def __init__(self, layers: List[DenseLayer]):
+    def __init__(self, layers: List[BaseLayer]):
         self.layers = layers
+
+    @property
+    def depth(self) -> int:
+        """
+        Number of layers in the network (not including input).
+        :return:
+        """
+        return len(self.layers)
 
     @classmethod
     def initialize(
@@ -20,7 +29,7 @@ class NeuralNet:
             xavier: bool = False,
             seed: int = 321):
         """
-        Initializes the network.
+        Initializes the network with dense, fully connected layers.
         :param layer_dims: Dimensions of the network layers. First entry is
             the number of input features.
         :param activations: Activation functions for each layer.
@@ -55,16 +64,16 @@ class NeuralNet:
     def compute_predictions(
             self,
             x: np.ndarray,
-            keep_caches: bool = False) -> np.ndarray:
+            train_mode: bool = False) -> np.ndarray:
         """
         Computes predictions by applying forward propagation.
         :param x: Array of inputs. Columns represent individual examples.
-        :param keep_caches: Keep activation caches in layers for backprop.
+        :param train_mode: Keep activation caches in layers for backprop.
         :return: Array of predictions.
         """
         out = x
         for layer in self.layers:
-            out = layer.forward_prop(out, keep_cache=keep_caches)
+            out = layer.forward_prop(out, train_mode=train_mode)
         return out
 
     def append(self, other):

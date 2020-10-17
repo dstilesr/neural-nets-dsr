@@ -83,17 +83,17 @@ class DenseLayer(BaseLayer):
     def forward_prop(
             self,
             x: np.ndarray,
-            keep_cache: bool = False) -> np.ndarray:
+            train_mode: bool = False) -> np.ndarray:
         """
         Computes the forward propagation of the layer.
         :param x: Array of activations from previous layer. Columns correspond
             to different examples, rows to different features.
-        :param keep_cache: Keep a cache of the activation for later backprop
+        :param train_mode: Keep a cache of the activation for later backprop
             or not.
         :return:
         """
         z = np.dot(self.__w, x) + self.__b
-        if keep_cache:
+        if train_mode:
             self.cache["z"] = z
             self.cache["a"] = x
         return self.activation(z)

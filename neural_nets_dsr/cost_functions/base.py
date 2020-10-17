@@ -11,14 +11,19 @@ class CostFunction(F):
     def __init__(
             self,
             function: F,
-            gradient: Callable[[np.ndarray, np.ndarray], np.ndarray]):
+            gradient: Callable[[np.ndarray, np.ndarray], np.ndarray],
+            name: str):
         """
 
-        :param function:
-        :param gradient:
+        :param function: Cost function.
+        :param gradient: Function to compute derivatives of the cost function.
+        :param name: Name of the cost function
         """
+        if len(name) == 0:
+            raise ValueError("Name must be non-empty!")
         self.__function = function
         self.__gradient = gradient
+        self.__name = name
 
     @property
     def gradient(self) -> Callable[[np.ndarray, np.ndarray], np.ndarray]:
@@ -27,6 +32,14 @@ class CostFunction(F):
         :return:
         """
         return self.__gradient
+
+    @property
+    def name(self) -> str:
+        """
+        Name of the cost function.
+        :return:
+        """
+        return self.__name
 
     def __call__(self, y_true: np.ndarray, y_pred: np.ndarray) -> float:
         """

@@ -30,11 +30,11 @@ class BaseLayer(ABC):
     def forward_prop(
             self,
             x: np.ndarray,
-            keep_cache: bool = False) -> np.ndarray:
+            train_mode: bool = False) -> np.ndarray:
         """
         Forward Propagation.
         :param x:
-        :param keep_cache:
+        :param train_mode:
         :return:
         """
         pass
@@ -57,3 +57,21 @@ class BaseLayer(ABC):
         :return:
         """
         pass
+
+    @property
+    def weights(self) -> np.ndarray:
+        """
+        Gives weights of this layer (this is a dummy implementation to ensure
+        compatibility for layers without weights).
+        :return:
+        """
+        return np.zeros((1, 1))
+
+    @property
+    def biases(self) -> np.ndarray:
+        """
+        Gives biases of this layer (this is a dummy implementation to ensure
+        compatibility for layers without biases).
+        :return:
+        """
+        return np.zeros((1, 1))
