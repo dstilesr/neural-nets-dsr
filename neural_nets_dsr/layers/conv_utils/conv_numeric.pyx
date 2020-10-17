@@ -11,8 +11,8 @@ ctypedef np.float64_t NPFLOAT
 cdef NPFLOAT slice_prod(NPFLOAT[:, :] a, NPFLOAT[:, :] b) nogil:
     """
     Return the sum of the element-wise product of two 2D slices.
-    :param a: 
-    :param b: 
+    :param a: A 2D slice.
+    :param b: Another 2D slice. Must have the same shape as a.
     :return: 
     """
     cdef NPFLOAT out = 0.0
@@ -95,9 +95,9 @@ cpdef ARR[NPFLOAT, ndim=4] full_conv(ARR[NPFLOAT, ndim=4] vol, ARR[NPFLOAT, ndim
 cdef NPFLOAT[:, :] multiply_2d(NPFLOAT[:, :] aslice, NPFLOAT num, NPFLOAT[:, :] out) nogil:
     """
     Multiply a 2d slice by a number
-    :param aslice: 
-    :param num: 
-    :param out: 
+    :param aslice: A 2D slice.
+    :param num: Number by which to multiply.
+    :param out: Slice to store the output. Must have same shape as aslice.
     :return: 
     """
     cdef int ilim = aslice.shape[0], jlim = aslice.shape[1]
@@ -117,9 +117,9 @@ cdef NPFLOAT[:, :, :] multiply_3d(
         NPFLOAT[:, :, :] out) nogil:
     """
     Multuiply a 3d slice by a number.
-    :param aslice: 
-    :param num: 
-    :param out: 
+    :param aslice: A 3D slice.
+    :param num: Number by which to multiply.
+    :param out: Slice to store the output. Must have same shape as aslice.
     :return: 
     """
     cdef int ilim = aslice.shape[0], jlim = aslice.shape[1], klim = aslice.shape[2]
@@ -158,11 +158,12 @@ def conv_backprop(
         ARR[NPFLOAT, ndim=4] filters,
         ARR[NPFLOAT, ndim=4] aprev):
     """
-
+    Compute derivatives of gradient with respect to the filters of a
+    convolutional layer and the previous layer's activations.
     :param dz: Gradient wrt
     :param filters: Filters of this layer.
-    :param aprev:
-    :return:
+    :param aprev: Activations of the previous layer.
+    :return: The gradients dw, daprev.
     """
     cdef ARR[NPFLOAT, ndim=4] daprev = np.zeros_like(aprev)
     cdef ARR[NPFLOAT, ndim=4] dw = np.zeros_like(filters)

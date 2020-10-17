@@ -50,7 +50,6 @@ The `neural_nets_dsr` package contains the following subpackages and modules:
 - Every optimizer should know how to perform updates on weights and biases.
 
 ## Current Issues
-- Convolution backprop not always working.
 - Doubts about batchnorm derivative computation.
 - Numerical stability.
 

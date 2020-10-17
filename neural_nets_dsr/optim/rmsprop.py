@@ -67,13 +67,13 @@ class RMSProp(GradientDescentL2):
             db: np.ndarray,
             lyr_index: int = -1) -> Tuple[np.ndarray, np.ndarray]:
         """
-
-        :param w:
-        :param b:
-        :param dw:
-        :param db:
-        :param lyr_index:
-        :return:
+        Compute RMS updates for weights and biases of a layer.
+        :param w: Weights of the layer.
+        :param b: Biases of the layer.
+        :param dw: Gradient wrt weights.
+        :param db: Gradient wrt biases.
+        :param lyr_index: Index of the layer in the network.
+        :return: The updated weights and biases.
         """
         self.__rms_w[lyr_index].update_value(np.square(dw))
         self.__rms_b[lyr_index].update_value(np.square(db))

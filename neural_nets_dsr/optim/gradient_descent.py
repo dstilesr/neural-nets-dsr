@@ -102,7 +102,7 @@ class GradientDescent(Optimizer):
         :param dw: Gradient of cost wrt weights.
         :param db: Gradient of cost wrt biases.
         :param lyr_index: Index of layer within network.
-        :return:
+        :return: The updated weights and biases.
         """
         return w - self.learning_rate * dw, b - self.learning_rate * db
 
