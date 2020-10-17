@@ -188,24 +188,11 @@ class Convolution2D(BaseLayer):
         :return:
         """
         filt_h, filt_w = self.filters.shape[:2]
-        outshape = self.output_shape(self._cache["a_prev"].shape)
-        dw = np.zeros_like(self.filters)
-        da_prev_pd = np.zeros_like(self._cache["a_prev_pad"])
-
-        for ex in range(dz.shape[0]):
-            for i in range(outshape[1]):
-                for j in range(outshape[2]):
-                    for c in range(self.filters.shape[-1]):
-                        a_slice = self._cache["a_prev_pad"][
-                                  ex, i:(i + filt_h), j:(j + filt_w), :
-                                  ]
-                        dw[:, :, :, c] += a_slice * dz[ex, i, j, c]
-
-                        da_prev_pd[ex, i:(i + filt_h), j:(j + filt_w), :] += (
-                            self.filters[:, :, :, c] * dz[ex, i, j, c]
-                        )
-
-        # dw, da_prev_pd = conv_backprop(dz, self.filters, self._cache["a_prev_pad"])
+        dw, da_prev_pd = conv_backprop(
+            dz,
+            self.filters,
+            self._cache["a_prev_pad"]
+        )
 
         if self.padding == "same":
             pdx, pdy = filt_h // 2, filt_w // 2

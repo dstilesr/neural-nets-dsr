@@ -173,8 +173,8 @@ def conv_backprop(
     # Shapes to limit the various loops
     cdef int f0 = filters.shape[0], f1 = filters.shape[1]
     cdef int elim = dz.shape[0]
-    cdef int ilim = aprev.shape[0] - 2 * (f0 // 2)
-    cdef int jlim = aprev.shape[1] - 2 * (f1 // 2)
+    cdef int ilim = aprev.shape[1] - 2 * (f0 // 2)
+    cdef int jlim = aprev.shape[2] - 2 * (f1 // 2)
     cdef int klim = filters.shape[3]
 
     # looping and temp vars
