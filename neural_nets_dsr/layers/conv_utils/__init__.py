@@ -1,1 +1,1 @@
-from .conv_numeric import full_conv
+from .conv_numeric import full_conv, conv_backprop

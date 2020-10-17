@@ -12,6 +12,16 @@ This repo contains some personal implementations of neural networks done for
 practice implementing backprop and optimization from scratch (using only numpy).
 Currently all networks are sequential.
 
+To install as python package, run:
+```bash
+python setup.py install
+```
+
+To compile Cython modules for testing run:
+```bash
+python setup.py build_ext --inplace
+```
+
 ## Branch 'Policies'
 For development, push to the `develop` branch, then merge with master when ready.
 

@@ -55,7 +55,7 @@ cdef NPFLOAT[:, :] filter_conv(NPFLOAT[:, :, :] vol, NPFLOAT[:, :, :] filt, NPFL
 
 
 @cython.wraparound(False)
-def full_conv(ARR[NPFLOAT, ndim=4] vol, ARR[NPFLOAT, ndim=4] filt):
+cpdef ARR[NPFLOAT, ndim=4] full_conv(ARR[NPFLOAT, ndim=4] vol, ARR[NPFLOAT, ndim=4] filt):
     """
     Compute the full convolution of the input volume and the filter set for
     convolutional layers.
@@ -89,3 +89,115 @@ def full_conv(ARR[NPFLOAT, ndim=4] vol, ARR[NPFLOAT, ndim=4] filt):
                 out_view[e, :, :, l]
             )
     return output
+
+
+@cython.wraparound(False)
+cdef NPFLOAT[:, :] multiply_2d(NPFLOAT[:, :] aslice, NPFLOAT num, NPFLOAT[:, :] out) nogil:
+    """
+    Multiply a 2d slice by a number
+    :param aslice: 
+    :param num: 
+    :param out: 
+    :return: 
+    """
+    cdef int ilim = aslice.shape[0], jlim = aslice.shape[1]
+    cdef int i, j
+
+    for i in range(ilim):
+        for j in range(jlim):
+            out[i, j] = aslice[i, j] * num
+
+    return out
+
+
+@cython.wraparound(False)
+cdef NPFLOAT[:, :, :] multiply_3d(
+        NPFLOAT[:, :, :] aslice,
+        NPFLOAT num,
+        NPFLOAT[:, :, :] out) nogil:
+    """
+    Multuiply a 3d slice by a number.
+    :param aslice: 
+    :param num: 
+    :param out: 
+    :return: 
+    """
+    cdef int ilim = aslice.shape[0], jlim = aslice.shape[1], klim = aslice.shape[2]
+    cdef int i, j, k
+
+    for i in range(ilim):
+        for j in range(jlim):
+            for k in range(klim):
+                out[i, j, k] = aslice[i, j, k] * num
+
+    return out
+
+
+@cython.wraparound(False)
+cdef void add_to_slice_3(
+        NPFLOAT[:, :, :] s1,
+        NPFLOAT[:, :, :] s2) nogil:
+    """
+    Add the 3d slice s2 to the 3d slice s1 inplace.
+    :param s1: 
+    :param s2:
+    :return: 
+    """
+    cdef int ilim = s1.shape[0], jlim = s1.shape[1], klim = s1.shape[2]
+    cdef int i, j, k
+
+    for i in range(ilim):
+        for j in range(jlim):
+            for k in range(klim):
+                s1[i, j, k] += s2[i, j, k]
+
+
+@cython.wraparound(False)
+def conv_backprop(
+        ARR[NPFLOAT, ndim=4] dz,
+        ARR[NPFLOAT, ndim=4] filters,
+        ARR[NPFLOAT, ndim=4] aprev):
+    """
+
+    :param dz: Gradient wrt
+    :param filters: Filters of this layer.
+    :param aprev:
+    :return:
+    """
+    cdef ARR[NPFLOAT, ndim=4] daprev = np.zeros_like(aprev)
+    cdef ARR[NPFLOAT, ndim=4] dw = np.zeros_like(filters)
+
+    cdef NPFLOAT[:, :, :, :] dzview = dz, dapview = daprev, dfview = dw
+    cdef NPFLOAT[:, :, :, :] fview = filters, apview = aprev
+
+    # Shapes to limit the various loops
+    cdef int f0 = filters.shape[0], f1 = filters.shape[1]
+    cdef int elim = dz.shape[0]
+    cdef int ilim = aprev.shape[0] - 2 * (f0 // 2)
+    cdef int jlim = aprev.shape[1] - 2 * (f1 // 2)
+    cdef int klim = filters.shape[3]
+
+    # looping and temp vars
+    cdef int e, i, j, k, iup, jup
+    cdef NPFLOAT temp
+
+    # To temporarily store results of arithmetic
+    cdef NPFLOAT[:, :, :] tempslice = np.zeros((elim, f0, f1))
+
+    for e in prange(elim, nogil=True):
+        for k in range(klim):
+            for i in range(ilim):
+                iup = i + f0
+                for j in range(jlim):
+                    jup = j + f1
+                    temp = dzview[e, i, j, k]
+                    add_to_slice_3(
+                        dfview[:, :, :, k],
+                        multiply_3d(apview[e, i:iup, j:jup, :], temp, tempslice)
+                    )
+                    add_to_slice_3(
+                        dapview[e, i:iup, j:jup, :],
+                        multiply_3d(fview[:, :, :, k], temp, tempslice)
+                    )
+
+    return dw, daprev

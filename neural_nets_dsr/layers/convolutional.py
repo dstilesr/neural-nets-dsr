@@ -1,7 +1,7 @@
 import numpy as np
 from typing import Tuple, Union
-from .conv_utils import full_conv
 from .base import BaseLayer, ActivationFunc
+from .conv_utils import full_conv, conv_backprop
 
 
 class Convolution2D(BaseLayer):
@@ -174,7 +174,7 @@ class Convolution2D(BaseLayer):
 
         if train_mode:
             self._cache["a_prev"] = x
-            self._cache["a"] = a
+            self._cache["z"] = z
             self._cache["a_prev_pad"] = xpad
 
         return a
@@ -187,8 +187,8 @@ class Convolution2D(BaseLayer):
         :param da:
         :return:
         """
-        outshape = self.output_shape(self._cache["a_prev"].shape)
         filt_h, filt_w = self.filters.shape[:2]
+        outshape = self.output_shape(self._cache["a_prev"].shape)
         dw = np.zeros_like(self.filters)
         da_prev_pd = np.zeros_like(self._cache["a_prev_pad"])
 
@@ -205,6 +205,8 @@ class Convolution2D(BaseLayer):
                             self.filters[:, :, :, c] * dz[ex, i, j, c]
                         )
 
+        # dw, da_prev_pd = conv_backprop(dz, self.filters, self._cache["a_prev_pad"])
+
         if self.padding == "same":
             pdx, pdy = filt_h // 2, filt_w // 2
             da_prev = da_prev_pd[:, pdx:-pdx, pdy:-pdy, :]
@@ -220,7 +222,7 @@ class Convolution2D(BaseLayer):
         :return: Gradients wrt filters, biases and to previous layer's
             activations.
         """
-        dz = self.activation.gradient(da)
+        dz = self.activation.gradient(self._cache["z"]) * da
         db = np.sum(dz, axis=(1, 2), keepdims=True)
         db = np.mean(db, axis=0, keepdims=False)
         dw, da_prev = self.__compute_dwda(dz)
