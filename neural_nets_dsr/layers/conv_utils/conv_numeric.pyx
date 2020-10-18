@@ -176,14 +176,14 @@ def conv_backprop(
     cdef int elim = dz.shape[0]
     cdef int ilim = aprev.shape[1] - 2 * (f0 // 2)
     cdef int jlim = aprev.shape[2] - 2 * (f1 // 2)
-    cdef int klim = filters.shape[3]
+    cdef int klim = filters.shape[3], prev_chan = filters.shape[2]
 
     # looping and temp vars
     cdef int e, i, j, k, iup, jup
     cdef NPFLOAT temp
 
     # To temporarily store results of arithmetic
-    cdef NPFLOAT[:, :, :] tempslice = np.zeros((elim, f0, f1))
+    cdef NPFLOAT[:, :, :] tempslicedf = np.zeros((f0, f1, prev_chan))
 
     for e in prange(elim, nogil=True):
         for k in range(klim):
@@ -194,11 +194,64 @@ def conv_backprop(
                     temp = dzview[e, i, j, k]
                     add_to_slice_3(
                         dfview[:, :, :, k],
-                        multiply_3d(apview[e, i:iup, j:jup, :], temp, tempslice)
+                        multiply_3d(apview[e, i:iup, j:jup, :], temp, tempslicedf)
                     )
                     add_to_slice_3(
                         dapview[e, i:iup, j:jup, :],
-                        multiply_3d(fview[:, :, :, k], temp, tempslice)
+                        multiply_3d(fview[:, :, :, k], temp, tempslicedf)
                     )
 
     return dw, daprev
+
+
+@cython.wraparound(False)
+cdef NPFLOAT slice_max(NPFLOAT[:, :] slc) nogil:
+    """
+    Computes the maximum of the given 2D slice.
+    :param slc: 
+    :return: 
+    """
+    cdef int i = 0, j = 0, ilim = slc.shape[0], jlim = slc.shape[1]
+    cdef NPFLOAT maximum = slc[i, j]
+    cdef NPFLOAT temp
+
+    for i in range(ilim):
+        for j in range(jlim):
+            temp = slc[i, j]
+            if temp > maximum:
+                maximum = temp
+
+    return maximum
+
+
+@cython.wraparound(False)
+cpdef ARR[NPFLOAT, ndim=4] max_pool_2d(
+        ARR[NPFLOAT, ndim=4] x,
+        int sizex,
+        int sizey):
+    """
+    Perform 2D max pooling on an array. Stride is taken to be the size of the
+    filter.
+    :param x: Input volume.
+    :param sizex: x size for max pooling filter.
+    :param sizey: y size for max pooling filter.
+    :return: Reduced volume.
+    """
+    cdef int elim = x.shape[0], channels = x.shape[3]
+    cdef int xlim = x.size[1] // sizex - 1, ylim = x.size[2] // sizey - 1
+    cdef ARR[NPFLOAT, ndim=4] output = np.zeros((elim, xlim, ylim, channels))
+
+    cdef NPFLOAT[:, :, :, :] xview = x, outview = output
+    cdef int e, i, j, k, ilow, ihi, jlow, jhi
+    for e in prange(elim, nogil=True):
+        for k in range(channels):
+            for i in range(xlim):
+                ilow = i * sizex
+                ihi = ilow + sizex
+                for j in range(ylim):
+                    jlow = j * sizey
+                    jhi = jlow + sizey
+                    outview[e, i, j, k] = slice_max(xview[e, ilow:ihi, jlow:jhi, k])
+
+    return output
+
