@@ -176,14 +176,15 @@ def conv_backprop(
     cdef int elim = dz.shape[0]
     cdef int ilim = aprev.shape[1] - 2 * (f0 // 2)
     cdef int jlim = aprev.shape[2] - 2 * (f1 // 2)
-    cdef int klim = filters.shape[3]
+    cdef int klim = filters.shape[3], prev_chan = filters.shape[2]
 
     # looping and temp vars
     cdef int e, i, j, k, iup, jup
     cdef NPFLOAT temp
 
     # To temporarily store results of arithmetic
-    cdef NPFLOAT[:, :, :] tempslice = np.zeros((elim, f0, f1))
+    cdef NPFLOAT[:, :, :] tempslicedf = np.zeros((f0, f1, prev_chan))
+    cdef NPFLOAT[:, :, :] tempsliceda = np.zeros((f0, f1, prev_chan))
 
     for e in prange(elim, nogil=True):
         for k in range(klim):
@@ -194,11 +195,11 @@ def conv_backprop(
                     temp = dzview[e, i, j, k]
                     add_to_slice_3(
                         dfview[:, :, :, k],
-                        multiply_3d(apview[e, i:iup, j:jup, :], temp, tempslice)
+                        multiply_3d(apview[e, i:iup, j:jup, :], temp, tempslicedf)
                     )
                     add_to_slice_3(
                         dapview[e, i:iup, j:jup, :],
-                        multiply_3d(fview[:, :, :, k], temp, tempslice)
+                        multiply_3d(fview[:, :, :, k], temp, tempslicedf)
                     )
 
     return dw, daprev
