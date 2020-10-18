@@ -184,7 +184,6 @@ def conv_backprop(
 
     # To temporarily store results of arithmetic
     cdef NPFLOAT[:, :, :] tempslicedf = np.zeros((f0, f1, prev_chan))
-    cdef NPFLOAT[:, :, :] tempsliceda = np.zeros((f0, f1, prev_chan))
 
     for e in prange(elim, nogil=True):
         for k in range(klim):
