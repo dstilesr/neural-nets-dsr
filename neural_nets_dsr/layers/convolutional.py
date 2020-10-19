@@ -1,7 +1,7 @@
 import numpy as np
 from typing import Tuple, Union
 from .base import BaseLayer, ActivationFunc
-from .conv_utils import full_conv, conv_backprop
+from .numeric_utils import full_conv, conv_backprop
 
 
 class Convolution2D(BaseLayer):
