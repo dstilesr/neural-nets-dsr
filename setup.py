@@ -4,12 +4,12 @@ import numpy as np
 from Cython.Build import cythonize
 
 ext = [Extension(
-    "neural_nets_dsr.layers.conv_utils.conv_numeric",
+    "neural_nets_dsr.layers.numeric_utils.conv_utils",
     [os.path.join(
         "neural_nets_dsr",
         "layers",
-        "conv_utils",
-        "conv_numeric.pyx"
+        "numeric_utils",
+        "conv_utils.pyx"
     )],
     extra_compile_args=["-fopenmp"],
     extra_link_args=["-fopenmp"],
