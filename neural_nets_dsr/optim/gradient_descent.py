@@ -61,6 +61,16 @@ class GradientDescent(Optimizer):
     def axis(self) -> int:
         return self._axis
 
+    def local_print(self, *args, **kwargs):
+        """
+        Prints arguments only if verbose is set to True.
+        :param args:
+        :param kwargs:
+        :return:
+        """
+        if self._verbose:
+            print(*args, **kwargs)
+
     def make_batch_iterator(
             self,
             x: np.ndarray,
@@ -142,11 +152,14 @@ class GradientDescent(Optimizer):
         :param y: Training set labels.
         :return: The fitted network.
         """
+        cost = -1.0
         self._network = network
         self.make_batch_iterator(x, y)
         for i, (x_batch, y_batch) in enumerate(self._batch_iter):
             cost = self.gradient_descent_iteration(x_batch, y_batch)
-            if self.verbose and i % 100 == 0:
-                print("Cost at iteration %d: %f" % (i, cost))
+            if i % 100 == 0:
+                self.local_print("Cost at iteration %d: %0.4f" % (i, cost))
+
+        self.local_print("Training ended. Cost: %0.4f" % cost)
 
         return self._network
