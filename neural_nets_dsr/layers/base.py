@@ -9,6 +9,9 @@ class BaseLayer(ABC):
     Base class for layers of a network.
     """
 
+    def __init__(self):
+        self.__trainable = True
+
     @staticmethod
     def get_activation(
             activation: Union[ActivationFunc, str]) -> ActivationFunc:
@@ -49,7 +52,7 @@ class BaseLayer(ABC):
         pass
 
     @abstractmethod
-    def set_weights(self, *args, **kwargs):
+    def _fix_weights(self, *args, **kwargs):
         """
         Set new values to the layer's weights.
         :param args:
@@ -75,3 +78,36 @@ class BaseLayer(ABC):
         :return:
         """
         return np.zeros((1, 1))
+
+    @property
+    def trainable(self) -> bool:
+        """
+        Tells whether the layer is currently being trained.
+        :return:
+        """
+        return self.__trainable
+
+    def set_trainable(self, trainable: bool = True):
+        """
+        Sets the layer's trainability.
+        :param trainable: True to make the layer trainable.
+        :return:
+        """
+        self.__trainable = trainable
+
+    def freeze_params(self):
+        """
+        Sets the layer to be non-trainable.
+        :return:
+        """
+        self.__trainable = False
+
+    def set_weights(self, *args, **kwargs):
+        """
+        Updates the model's weights only if trainable is set to True.
+        :param args:
+        :param kwargs:
+        :return:
+        """
+        if self.__trainable:
+            self._fix_weights(*args, **kwargs)

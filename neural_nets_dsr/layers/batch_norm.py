@@ -24,6 +24,7 @@ class BatchNorm(BaseLayer):
         :param epsilon:
         :param axis:
         """
+        super().__init__()
         self._epsilon = epsilon
         self._axis = axis
         self.__gamma = gamma
@@ -135,9 +136,9 @@ class BatchNorm(BaseLayer):
         self.__cache = {}
         return dgamma, dbeta, da_prev
 
-    def set_weights(self, w: np.ndarray, b: np.ndarray):
+    def _fix_weights(self, w: np.ndarray, b: np.ndarray):
         """
-
+        Sets new values for gamma and beta vectors.
         :param w:
         :param b:
         :return:

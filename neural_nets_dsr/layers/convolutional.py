@@ -22,6 +22,7 @@ class Convolution2D(BaseLayer):
         :param biases:
         :param stride:
         """
+        super().__init__()
         self.__filters = filters
         self.__biases = biases
         self.__stride = stride
@@ -216,7 +217,7 @@ class Convolution2D(BaseLayer):
         self._cache = {}
         return dw, db, da_prev
 
-    def set_weights(self, w: np.ndarray, b: np.ndarray):
+    def _fix_weights(self, w: np.ndarray, b: np.ndarray):
         """
         Updates filters and biases.
         :param w:
@@ -235,6 +236,7 @@ class FlattenLayer(BaseLayer):
     """
 
     def __init__(self):
+        super().__init__()
         self._input_shape = None
 
     def forward_prop(
@@ -260,7 +262,7 @@ class FlattenLayer(BaseLayer):
         """
         return 0.0, 0.0, da.T.reshape(self._input_shape)
 
-    def set_weights(self, *args, **kwargs):
+    def _fix_weights(self, *args, **kwargs):
         """
         DUMMY
         :param args:
