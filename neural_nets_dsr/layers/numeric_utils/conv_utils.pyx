@@ -92,9 +92,9 @@ cpdef ARR[NPFLOAT, ndim=4] full_conv(ARR[NPFLOAT, ndim=4] vol, ARR[NPFLOAT, ndim
 
 
 @cython.wraparound(False)
-cdef NPFLOAT[:, :] multiply_2d(NPFLOAT[:, :] aslice, NPFLOAT num, NPFLOAT[:, :] out) nogil:
+cdef void multiply_2d_inplace(NPFLOAT[:, :] aslice, NPFLOAT num) nogil:
     """
-    Multiply a 2d slice by a number
+    Multiply a 2d slice by a number in place.
     :param aslice: A 2D slice.
     :param num: Number by which to multiply.
     :param out: Slice to store the output. Must have same shape as aslice.
@@ -105,9 +105,7 @@ cdef NPFLOAT[:, :] multiply_2d(NPFLOAT[:, :] aslice, NPFLOAT num, NPFLOAT[:, :] 
 
     for i in range(ilim):
         for j in range(jlim):
-            out[i, j] = aslice[i, j] * num
-
-    return out
+            aslice[i, j] *= num
 
 
 @cython.wraparound(False)
@@ -183,7 +181,7 @@ def conv_backprop(
     cdef NPFLOAT temp
 
     # To temporarily store results of arithmetic
-    cdef NPFLOAT[:, :, :] tempslicedf = np.zeros((f0, f1, prev_chan))
+    cdef NPFLOAT[:, :, :, :] tempslicedf = np.zeros((elim, f0, f1, prev_chan))
 
     for e in prange(elim, nogil=True):
         for k in range(klim):
@@ -194,11 +192,19 @@ def conv_backprop(
                     temp = dzview[e, i, j, k]
                     add_to_slice_3(
                         dfview[:, :, :, k],
-                        multiply_3d(apview[e, i:iup, j:jup, :], temp, tempslicedf)
+                        multiply_3d(
+                            apview[e, i:iup, j:jup, :],
+                            temp,
+                            tempslicedf[e, :, :, :]
+                        )
                     )
                     add_to_slice_3(
                         dapview[e, i:iup, j:jup, :],
-                        multiply_3d(fview[:, :, :, k], temp, tempslicedf)
+                        multiply_3d(
+                            fview[:, :, :, k],
+                            temp,
+                            tempslicedf[e, :, :, :]
+                        )
                     )
 
     return dw, daprev
@@ -338,13 +344,12 @@ cpdef ARR[NPFLOAT, ndim=4] expand_pooled(
                 for j in range(ylim):
                     jlo = j * filty
                     jhi = jlo + filty
-                    outview[e, ilo:ihi, jlo:jhi, k] = multiply_2d(
+                    multiply_2d_inplace(
                         outview[e, ilo:ihi, jlo:jhi, k],
-                        x[e, i, j, k],
-                        temp
+                        x[e, i, j, k]
                     )
 
-    out[:, (xlim * filtx + 1):, :, :] *= 0.0
-    out[:, :, (ylim * filty + 1):, :] *= 0.0
+    out[:, (xlim * filtx + 1):, :, :] = 0.0
+    out[:, :, (ylim * filty + 1):, :] = 0.0
     return out
 
