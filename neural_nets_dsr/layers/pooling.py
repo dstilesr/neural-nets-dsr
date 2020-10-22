@@ -69,7 +69,9 @@ class MaxPool(Base2DPool):
         :param da:
         :return:
         """
-        daprev = self._cache["mask"] * da
+        orig_x, orig_y = self._cache["mask"].shape[1:3]
+        expanded = expand_pooled(da, orig_x, orig_y, *self.filter_shape)
+        daprev = self._cache["mask"] * expanded
         self._cache = {}
         return np.zeros((1, 1)), np.zeros((1, 1)), daprev
 
