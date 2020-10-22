@@ -5,6 +5,7 @@ from cython.parallel import prange
 
 ctypedef np.ndarray ARR
 ctypedef np.float64_t NPFLOAT
+ctypedef NPFLOAT (*agg_2d) (NPFLOAT[:, :]) nogil
 
 
 @cython.wraparound(False)
@@ -249,16 +250,18 @@ cdef NPFLOAT slice_avg(NPFLOAT[:, :] slc) nogil:
 
 
 @cython.wraparound(False)
-cpdef ARR[NPFLOAT, ndim=4] max_pool_2d(
+cdef ARR[NPFLOAT, ndim=4] pool_2d(
         ARR[NPFLOAT, ndim=4] x,
         int sizex,
-        int sizey):
+        int sizey,
+        agg_2d agg_func):
     """
     Perform 2D max pooling on an array. Stride is taken to be the size of the
     filter.
     :param x: Input volume.
     :param sizex: x size for max pooling filter.
     :param sizey: y size for max pooling filter.
+    :param agg_func: Function used to aggregate over 2D slices.
     :return: Reduced volume.
     """
     cdef int elim = x.shape[0], channels = x.shape[3]
@@ -275,9 +278,25 @@ cpdef ARR[NPFLOAT, ndim=4] max_pool_2d(
                 for j in range(ylim):
                     jlow = j * sizey
                     jhi = jlow + sizey
-                    outview[e, i, j, k] = slice_max(xview[e, ilow:ihi, jlow:jhi, k])
+                    outview[e, i, j, k] = agg_func(xview[e, ilow:ihi, jlow:jhi, k])
 
     return output
+
+
+@cython.wraparound(False)
+cpdef ARR[NPFLOAT, ndim=4] max_pool_2d(
+        ARR[NPFLOAT, ndim=4] x,
+        int sizex,
+        int sizey):
+    """
+    Perform 2D max pooling on an array. Stride is taken to be the size of the
+    filter.
+    :param x: Input volume.
+    :param sizex: x size for max pooling filter.
+    :param sizey: y size for max pooling filter.
+    :return: Reduced volume.
+    """
+    return pool_2d(x, sizex, sizey, slice_max)
 
 
 @cython.wraparound(False)
@@ -293,23 +312,7 @@ cpdef ARR[NPFLOAT, ndim=4] avg_pool_2d(
     :param sizey: y size for max pooling filter.
     :return: Reduced volume.
     """
-    cdef int elim = x.shape[0], channels = x.shape[3]
-    cdef int xlim = x.shape[1] // sizex, ylim = x.shape[2] // sizey
-    cdef ARR[NPFLOAT, ndim=4] output = np.zeros((elim, xlim, ylim, channels))
-
-    cdef NPFLOAT[:, :, :, :] xview = x, outview = output
-    cdef int e, i, j, k, ilow, ihi, jlow, jhi
-    for e in prange(elim, nogil=True):
-        for k in range(channels):
-            for i in range(xlim):
-                ilow = i * sizex
-                ihi = ilow + sizex
-                for j in range(ylim):
-                    jlow = j * sizey
-                    jhi = jlow + sizey
-                    outview[e, i, j, k] = slice_avg(xview[e, ilow:ihi, jlow:jhi, k])
-
-    return output
+    return pool_2d(x, sizex, sizey, slice_avg)
 
 
 @cython.wraparound(False)
