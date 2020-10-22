@@ -14,7 +14,7 @@ class DenseLayer(BaseLayer):
             w: np.ndarray,
             b: np.ndarray,
             activation: activations.ActivationFunc):
-
+        super().__init__()
         if w.shape[0] != b.shape[0]:
             raise ValueError("Mismatched dimensions!")
 
@@ -115,7 +115,7 @@ class DenseLayer(BaseLayer):
         self.reset_cache()
         return dw, db, np.dot(self.__w.T, dz)
 
-    def set_weights(self, w: np.ndarray, b: np.ndarray):
+    def _fix_weights(self, w: np.ndarray, b: np.ndarray):
         """
         Updates the weights and biases with new values.
         :param w: Updated weights.

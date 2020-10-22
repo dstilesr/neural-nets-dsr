@@ -20,6 +20,7 @@ class DropoutLayer(BaseLayer):
         :param dropout_rate:
         :param seed: Seed for RNG.
         """
+        super().__init__()
         if not 0. <= dropout_rate <= 1.:
             raise ValueError("Dropout rate must be between 0 and 1!")
 
@@ -75,7 +76,7 @@ class DropoutLayer(BaseLayer):
         self._mask = None
         return np.zeros((1, 1)), np.zeros((1, 1)), daprev
 
-    def set_weights(self, *args, **kwargs):
+    def _fix_weights(self, *args, **kwargs):
         """
         Dummy method for compaibility.
         :param args:
