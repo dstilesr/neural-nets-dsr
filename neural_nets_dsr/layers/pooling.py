@@ -22,6 +22,15 @@ class Base2DPool(BaseLayer):
         self.__input_shape = None
         self._cache = {}
 
+    @classmethod
+    def initialize(cls, filter_size: Tuple[int, int]) -> "Base2DPool":
+        """
+        Initialize a pooling layer.
+        :param filter_size:
+        :return:
+        """
+        return cls(*filter_size)
+
     @property
     def filter_shape(self) -> Tuple[int, int]:
         """

@@ -30,7 +30,7 @@ class DenseLayer(BaseLayer):
             prev_layer_neurons: int,
             activation: Union[str, activations.ActivationFunc] = "relu",
             seed=123,
-            scale: float = 0.01):
+            scale: float = 0.01) -> "DenseLayer":
         """
         Initializes the parameters for the layer with random weights.
         :param num_neurons: Number of neurons in this layer.

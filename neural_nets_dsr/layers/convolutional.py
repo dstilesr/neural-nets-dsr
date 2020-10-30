@@ -84,7 +84,7 @@ class Convolution2D(BaseLayer):
             stride: int = 1,
             padding: str = "valid",
             activation: Union[str, ActivationFunc] = "relu",
-            seed: int = 21):
+            seed: int = 21) -> "Convolution2D":
         """
         Initialize the layer.
         :param prev_channels: Number of channels in previous layer.
@@ -185,7 +185,6 @@ class Convolution2D(BaseLayer):
         Compute the gradient of the cost function wrt to the layer's weights
         and previous layer's activations.
         :param dz:
-        :param da:
         :return:
         """
         filt_h, filt_w = self.filters.shape[:2]
@@ -238,6 +237,10 @@ class FlattenLayer(BaseLayer):
     def __init__(self):
         super().__init__()
         self._input_shape = None
+
+    @classmethod
+    def initialize(cls) -> "FlattenLayer":
+        return cls()
 
     def forward_prop(
             self,
