@@ -4,6 +4,8 @@
 * [About](#about)
 * [Repository Contents](#repository-contents)
 * [Organization](#organization)
+  * [Guidelines](#guidelines)
+  * [Versioning](#versioning)
 * [Branch 'Policies'](#branch-policies)
 * [Current Issues](#current-issues)
 
@@ -45,9 +47,19 @@ The `neural_nets_dsr` package contains the following subpackages and modules:
   classes.
 
 ## Organization
+
+### Guidelines
 - Every activation and cost function should 'know' how to compute its own gradient.
 - Each layer should know how to forward and back propagate through itself.
 - Every optimizer should know how to perform updates on weights and biases.
+
+### Versioning
+- Tiny version change `0.0.x`: Bugfix or minor change in implementation.
+- Minor version change `0.x.0`: New feature added, but still compatible with
+  previous versions.
+- Major version change `x.0.0`: Major refactoring or changes that break compatibility with
+  previous versions.
+
 
 ## Current Issues
 - Doubts about batchnorm derivative computation.
