@@ -249,6 +249,32 @@ cdef NPFLOAT slice_avg(NPFLOAT[:, :] slc) nogil:
     return slc_sum / num_entries
 
 
+cdef void pool2d_slice(
+        NPFLOAT[:, :] x_slice,
+        int sizex,
+        int sizey,
+        agg_2d agg_func,
+        NPFLOAT[:, :] out) nogil:
+    """
+    Auxiliary function to perform pooling on a 2D slice.
+    :param x_slice: 
+    :param sizex: Filter height.
+    :param sizey: Filter width.
+    :param agg_func: Function to be used for aggregation.
+    :param out: Slice to store output.
+    :return: None
+    """
+    cdef int xlim = out.shape[0], ylim = out.shape[1]
+    cdef int i, j, ilo, ihi, jlo, jhi
+    for i in range(xlim):
+        ilo = i * sizex
+        ihi = ilo + sizex
+        for j in range(ylim):
+            jlo = j * sizey
+            jhi = jlo + sizey
+            out[i, j] = agg_func(x_slice[ilo:ihi, jlo:jhi])
+
+
 @cython.wraparound(False)
 cdef ARR[NPFLOAT, ndim=4] pool_2d(
         ARR[NPFLOAT, ndim=4] x,
@@ -269,16 +295,16 @@ cdef ARR[NPFLOAT, ndim=4] pool_2d(
     cdef ARR[NPFLOAT, ndim=4] output = np.zeros((elim, xlim, ylim, channels))
 
     cdef NPFLOAT[:, :, :, :] xview = x, outview = output
-    cdef int e, i, j, k, ilow, ihi, jlow, jhi
+    cdef int e, k
     for e in prange(elim, nogil=True):
         for k in range(channels):
-            for i in range(xlim):
-                ilow = i * sizex
-                ihi = ilow + sizex
-                for j in range(ylim):
-                    jlow = j * sizey
-                    jhi = jlow + sizey
-                    outview[e, i, j, k] = agg_func(xview[e, ilow:ihi, jlow:jhi, k])
+            pool2d_slice(
+                xview[e, :, :, k],
+                sizex,
+                sizey,
+                agg_func,
+                outview[e, :, :, k]
+            )
 
     return output
 
