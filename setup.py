@@ -11,7 +11,10 @@ NUM_UTIL_PATH = os.path.join(
 
 ext = [Extension(
     "neural_nets_dsr.layers.numeric_utils.conv_utils",
-    [os.path.join(NUM_UTIL_PATH, "conv_utils.pyx")],
+    [
+        os.path.join(NUM_UTIL_PATH, "conv_utils.pyx"),
+        os.path.join(NUM_UTIL_PATH, "pooling.pyx")
+    ],
     extra_compile_args=["-fopenmp"],
     extra_link_args=["-fopenmp"],
     include_dirs=[np.get_include()]
