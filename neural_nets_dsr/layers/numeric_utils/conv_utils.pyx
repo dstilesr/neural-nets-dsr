@@ -336,8 +336,6 @@ cpdef ARR[NPFLOAT, ndim=4] expand_pooled(
     cdef int xlim = out_x // filtx, ylim = out_y // filty
     cdef NPFLOAT[:, :, :, :] outview = out, xview = x
 
-    cdef NPFLOAT[:, :] temp = np.zeros((filtx, filty))
-
     cdef int i, j, e, k, ilo, ihi, jlo, jhi
     for e in prange(elim, nogil=True):
         for k in prange(channels):
