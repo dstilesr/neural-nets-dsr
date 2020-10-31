@@ -28,7 +28,7 @@ ext = [
 
 setup(
     name="neural_nets_dsr",
-    version="0.0.3",
+    version="0.1.0",
     author="David Stiles Rosselli",
     url="https://github.com/dstilesr/neural-nets-dsr",
     ext_modules=cythonize(ext, include_path=[np.get_include()]),

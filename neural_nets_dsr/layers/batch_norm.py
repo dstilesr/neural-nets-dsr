@@ -41,7 +41,7 @@ class BatchNorm(BaseLayer):
             beta_avg: float = 0.9,
             epsilon: float = 1e-6,
             axis: int = 1,
-            seed: int = 843):
+            seed: int = 843) -> "BatchNorm":
         """
 
         :param input_shape: Shape of previous layer's activations (Set

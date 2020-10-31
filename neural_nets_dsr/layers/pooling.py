@@ -39,6 +39,22 @@ class Base2DPool(BaseLayer):
         """
         return self.__filter_x, self.__filter_y
 
+    def get_output_shape(
+            self,
+            input_shape: Tuple[int, ...]) -> Tuple[int, ...]:
+        """
+        Gives the output shape for a given input shape.
+        :param input_shape:
+        :return:
+        """
+        out = (
+            input_shape[0],
+            input_shape[1] // self.__filter_x,
+            input_shape[2] // self.__filter_y,
+            input_shape[3]
+        )
+        return out
+
     def _fix_weights(self, *args, **kwargs):
         """
         Dummy method for compatibility.
