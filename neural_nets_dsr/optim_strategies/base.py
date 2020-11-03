@@ -7,6 +7,22 @@ from typing import Callable, Iterable, Union
 U = Union[str, cost_functions.CostFunction]
 
 
+class UpdateStrategy(ABC):
+    """
+    Base class for parameter update strategies.
+    """
+
+    @abstractmethod
+    def update_params(self, vals: np.ndarray, grad: np.ndarray) -> np.ndarray:
+        """
+        Compute updated parameter values.
+        :param vals: Initial values.
+        :param grad: Gradient.
+        :return:
+        """
+        pass
+
+
 class Optimizer(Callable[[NeuralNet, np.ndarray, np.ndarray], NeuralNet], ABC):
     """
     Base class to model an optimizer for a neural network.

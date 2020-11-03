@@ -29,7 +29,7 @@ class ExpAvgAccumulator:
             cls,
             input_shape: Tuple,
             beta: float = 0.9,
-            normalize: bool = False):
+            normalize: bool = False) -> "ExpAvgAccumulator":
         """
         Initialize accumulator with zeroes.
         :param input_shape: Shape of input array.

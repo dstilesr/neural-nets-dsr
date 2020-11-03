@@ -1,9 +1,33 @@
 import numpy as np
 from . import batch_iter
-from .base import Optimizer
+from .base import Optimizer, UpdateStrategy
 from typing import Union, Tuple
 from ..network import NeuralNet
 from ..cost_functions.base import CostFunction
+
+
+class GradientDescentStrategy(UpdateStrategy):
+    """
+    Compute updates by gradient descent.
+    """
+
+    def __init__(self, learning_rate: float):
+        assert learning_rate > 0.0
+        self.__learning_rate = learning_rate
+
+    @property
+    def lr(self) -> float:
+        return self.__learning_rate
+
+    def update_params(self, vals: np.ndarray, grad: np.ndarray) -> np.ndarray:
+        """
+        Updates parameters by gradient descent.
+        :param vals:
+        :param grad:
+        :return:
+        """
+        assert vals.shape == grad.shape
+        return vals - self.lr * grad
 
 
 class GradientDescent(Optimizer):
