@@ -30,6 +30,21 @@ class DropoutLayer(BaseLayer):
         self.__input_shape = input_shape
         self._mask = None
 
+    @classmethod
+    def initialize(
+            cls,
+            dropout_rate: float,
+            input_shape: List[int],
+            seed: int = 1) -> "DropoutLayer":
+        """
+        Initialize the dropout layer.
+        :param dropout_rate:
+        :param input_shape:
+        :param seed:
+        :return:
+        """
+        return cls(input_shape, dropout_rate, seed)
+
     @property
     def dropout_rate(self) -> float:
         """

@@ -76,6 +76,17 @@ class NeuralNet:
             out = layer.forward_prop(out, train_mode=train_mode)
         return out
 
+    def layer_types(self) -> dict:
+        """
+        Gives a dictionary with the type of each layer in the network.
+        :return:
+        """
+        out = {}
+        for i, lyr in enumerate(self.layers):
+            out[f"Layer_{i:02d}"] = str(type(lyr))
+
+        return out
+
     def append(self, other):
         """
         Appends the layers of the other network.

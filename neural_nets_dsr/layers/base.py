@@ -29,6 +29,11 @@ class BaseLayer(ABC):
             raise ValueError("Unknown activation function!")
         return act
 
+    @classmethod
+    @abstractmethod
+    def initialize(cls, **kwargs) -> "BaseLayer":
+        pass
+
     @abstractmethod
     def forward_prop(
             self,

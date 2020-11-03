@@ -22,6 +22,15 @@ class Base2DPool(BaseLayer):
         self.__input_shape = None
         self._cache = {}
 
+    @classmethod
+    def initialize(cls, filter_size: Tuple[int, int]) -> "Base2DPool":
+        """
+        Initialize a pooling layer.
+        :param filter_size:
+        :return:
+        """
+        return cls(*filter_size)
+
     @property
     def filter_shape(self) -> Tuple[int, int]:
         """
@@ -29,6 +38,22 @@ class Base2DPool(BaseLayer):
         :return: Two integers.
         """
         return self.__filter_x, self.__filter_y
+
+    def get_output_shape(
+            self,
+            input_shape: Tuple[int, ...]) -> Tuple[int, ...]:
+        """
+        Gives the output shape for a given input shape.
+        :param input_shape:
+        :return:
+        """
+        out = (
+            input_shape[0],
+            input_shape[1] // self.__filter_x,
+            input_shape[2] // self.__filter_y,
+            input_shape[3]
+        )
+        return out
 
     def _fix_weights(self, *args, **kwargs):
         """
