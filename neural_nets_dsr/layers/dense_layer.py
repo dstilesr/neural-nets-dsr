@@ -1,10 +1,11 @@
 import numpy as np
 from typing import Union
 from .. import activations
-from .base import BaseLayer
+from ..optim_strategies.base import UpdateStrategy
+from .base import WeightedLayer
 
 
-class DenseLayer(BaseLayer):
+class DenseLayer(WeightedLayer):
     """
     Class to represent a layer of a neural network.
     """
@@ -22,6 +23,9 @@ class DenseLayer(BaseLayer):
         self.__b = b
         self.__activation = activation
         self.cache = {}
+
+        self.__b_update: UpdateStrategy = None
+        self.__w_update: UpdateStrategy = None
 
     @classmethod
     def initialize(
@@ -80,6 +84,17 @@ class DenseLayer(BaseLayer):
         """
         self.cache = {}
 
+    def set_update_strategy(self, strategy_name: str, **kwargs):
+        """
+        Sets optimization strategy for weights and biases.
+        :param strategy_name:
+        :param kwargs: Optimization hyperparameters.
+        :return:
+        """
+        optim_type = self.strategy_from_name(strategy_name)
+        self.__w_update = optim_type(**kwargs)
+        self.__b_update = optim_type(**kwargs)
+
     def forward_prop(
             self,
             x: np.ndarray,
@@ -98,7 +113,7 @@ class DenseLayer(BaseLayer):
             self.cache["a"] = x
         return self.activation(z)
 
-    def back_prop(self, da: np.ndarray):
+    def compute_derivatives(self, da: np.ndarray):
         """
         Computes the derivatives of the cost function with respect to the
         weights and biases of this layer using back propagation.
@@ -125,3 +140,19 @@ class DenseLayer(BaseLayer):
         assert w.shape == self.__w.shape and b.shape == self.__b.shape
         self.__w = w
         self.__b = b
+
+    def back_prop(self, da: np.ndarray) -> np.ndarray:
+        """
+        Backprop through the layer.
+        :param da:
+        :return: Gradients wrt previous layer's activations.
+        """
+        if self.__b_update is None or self.__w_update is None:
+            raise ValueError("No optimization strategy set!")
+
+        dw, db, daprev = self.compute_derivatives(da)
+        new_w = self.__w_update.update_params(self.__w, dw)
+        new_b = self.__b_update.update_params(self.__b, dw)
+        self.set_weights(new_w, new_b)
+        return daprev
+

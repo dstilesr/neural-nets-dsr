@@ -1,10 +1,11 @@
 import numpy as np
 from typing import Tuple
-from .base import BaseLayer
+from .base import WeightedLayer
+from ..optim_strategies import UpdateStrategy
 from ..utils import ExpAvgAccumulator as ExpAvg
 
 
-class BatchNorm(BaseLayer):
+class BatchNorm(WeightedLayer):
     """
     Batch Normalization layer.
     """
@@ -33,6 +34,20 @@ class BatchNorm(BaseLayer):
         self._mu_accum = ExpAvg.create(beta_shift.shape, beta_avg)
         self._sigma_accum = ExpAvg.create(beta_shift.shape, beta_avg)
         self.__cache = {}
+
+        self.__gamma_update: UpdateStrategy = None
+        self.__beta_update: UpdateStrategy = None
+
+    def set_update_strategy(self, strategy_name: str, **kwargs):
+        """
+        Set update strategy for parameters.
+        :param strategy_name:
+        :param kwargs:
+        :return:
+        """
+        optim_type = self.strategy_from_name(strategy_name)
+        self.__gamma_update = optim_type(**kwargs)
+        self.__beta_update = optim_type(**kwargs)
 
     @classmethod
     def initialize(
@@ -107,7 +122,7 @@ class BatchNorm(BaseLayer):
 
         return self.__gamma * xnorm + self.__beta
 
-    def back_prop(self, da: np.ndarray):
+    def compute_derivatives(self, da: np.ndarray):
         """
         Compute gradients of gamma and beta.
         :param da:
@@ -148,3 +163,15 @@ class BatchNorm(BaseLayer):
 
         assert b.shape == self.__beta.shape
         self.__beta = b
+
+    def back_prop(self, da: np.ndarray) -> np.ndarray:
+        """
+        Backprop through batchnorm layer.
+        :param da:
+        :return:
+        """
+        dgamma, dbeta, daprev = self.compute_derivatives(da)
+        newgamma = self.__gamma_update.update_params(self.__gamma, dgamma)
+        newbeta = self.__beta_update.update_params(self.__beta, dbeta)
+        self.set_weights(newgamma, newbeta)
+        return daprev

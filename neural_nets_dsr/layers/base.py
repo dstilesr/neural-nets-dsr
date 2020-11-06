@@ -1,6 +1,7 @@
 import numpy as np
 from typing import Union
 from abc import ABC, abstractmethod
+from .. import optim_strategies as optim
 from ..activations import ActivationFunc, ACTIVATIONS_NAMES
 
 
@@ -11,6 +12,21 @@ class BaseLayer(ABC):
 
     def __init__(self):
         self.__trainable = True
+
+    @staticmethod
+    def strategy_from_name(name: str):
+        if name in optim.STRATEGY_NAMES.keys():
+            return optim.STRATEGY_NAMES[name]
+        else:
+            raise KeyError(
+                "Unknown optimization strategy! "
+                + "Supported strategies are: "
+                + ", ".join(optim.STRATEGY_NAMES.keys())
+            )
+
+    @abstractmethod
+    def set_update_strategy(self, strategy_name: str, **kwargs):
+        pass
 
     @staticmethod
     def get_activation(
@@ -48,41 +64,8 @@ class BaseLayer(ABC):
         pass
 
     @abstractmethod
-    def back_prop(self, da: np.ndarray):
-        """
-        Compute derivatives by back propagation.
-        :param da:
-        :return:
-        """
+    def back_prop(self, da: np.ndarray) -> np.ndarray:
         pass
-
-    @abstractmethod
-    def _fix_weights(self, *args, **kwargs):
-        """
-        Set new values to the layer's weights.
-        :param args:
-        :param kwargs:
-        :return:
-        """
-        pass
-
-    @property
-    def weights(self) -> np.ndarray:
-        """
-        Gives weights of this layer (this is a dummy implementation to ensure
-        compatibility for layers without weights).
-        :return:
-        """
-        return np.zeros((1, 1))
-
-    @property
-    def biases(self) -> np.ndarray:
-        """
-        Gives biases of this layer (this is a dummy implementation to ensure
-        compatibility for layers without biases).
-        :return:
-        """
-        return np.zeros((1, 1))
 
     @property
     def trainable(self) -> bool:
@@ -106,6 +89,40 @@ class BaseLayer(ABC):
         :return:
         """
         self.__trainable = False
+
+
+class UnweightedLayer(BaseLayer, ABC):
+    """
+    Layers with no weights to optimize.
+    """
+
+    def set_update_strategy(self, strategy_name: str, **kwargs):
+        pass
+
+
+class WeightedLayer(BaseLayer, ABC):
+    """
+    Layers with weights to optimize.
+    """
+
+    @abstractmethod
+    def compute_derivatives(self, da: np.ndarray):
+        """
+        Compute derivatives by back propagation.
+        :param da:
+        :return:
+        """
+        pass
+
+    @abstractmethod
+    def _fix_weights(self, *args, **kwargs):
+        """
+        Set new values to the layer's weights.
+        :param args:
+        :param kwargs:
+        :return:
+        """
+        pass
 
     def set_weights(self, *args, **kwargs):
         """

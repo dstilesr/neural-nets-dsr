@@ -1,10 +1,10 @@
 import numpy as np
 from typing import Tuple
-from .base import BaseLayer
+from .base import UnweightedLayer
 from .numeric_utils import max_pool_2d, avg_pool_2d, expand_pooled
 
 
-class Base2DPool(BaseLayer):
+class Base2DPool(UnweightedLayer):
     """
     Abstract class for 2D pooling layers.
     """
@@ -88,7 +88,7 @@ class MaxPool(Base2DPool):
             self._cache["mask"] = expanded == x
         return x_pool
 
-    def back_prop(self, da: np.ndarray):
+    def back_prop(self, da: np.ndarray) -> np.ndarray:
         """
         Backprop through max pool layer.
         :param da:
@@ -98,7 +98,7 @@ class MaxPool(Base2DPool):
         expanded = expand_pooled(da, orig_x, orig_y, *self.filter_shape)
         daprev = self._cache["mask"] * expanded
         self._cache = {}
-        return np.zeros((1, 1)), np.zeros((1, 1)), daprev
+        return daprev
 
 
 class AvgPool(Base2DPool):
@@ -123,7 +123,7 @@ class AvgPool(Base2DPool):
             self._cache["a_prev"] = x
         return x_pool
 
-    def back_prop(self, da: np.ndarray):
+    def back_prop(self, da: np.ndarray) -> np.ndarray:
         """
         Backprop through average pooling layer.
         :param da:
@@ -133,4 +133,4 @@ class AvgPool(Base2DPool):
         norm_term = 1.0 / (fx * fy)
         orig_x, orig_y = self._cache["a_prev"].shape[1:3]
         daprev = expand_pooled(da, orig_x, orig_y, fx, fy) * norm_term
-        return np.zeros((1, 1)), np.zeros((1, 1)), daprev
+        return daprev

@@ -1,9 +1,9 @@
 import numpy as np
 from typing import List
-from .base import BaseLayer
+from .base import UnweightedLayer
 
 
-class DropoutLayer(BaseLayer):
+class DropoutLayer(UnweightedLayer):
     """
     Dropout regularization layer.
     """
@@ -81,7 +81,7 @@ class DropoutLayer(BaseLayer):
             out = x
         return out
 
-    def back_prop(self, da: np.ndarray):
+    def back_prop(self, da: np.ndarray) -> np.ndarray:
         """
         Backprop for dropout layer.
         :param da:
@@ -89,13 +89,4 @@ class DropoutLayer(BaseLayer):
         """
         daprev = (self._mask * da) / self.__keep_rate
         self._mask = None
-        return np.zeros((1, 1)), np.zeros((1, 1)), daprev
-
-    def _fix_weights(self, *args, **kwargs):
-        """
-        Dummy method for compaibility.
-        :param args:
-        :param kwargs:
-        :return:
-        """
-        pass
+        return daprev

@@ -1,10 +1,11 @@
 import numpy as np
 from typing import Tuple, Union
-from .base import BaseLayer, ActivationFunc
+from .base import WeightedLayer, UnweightedLayer, ActivationFunc
+from ..optim_strategies.base import UpdateStrategy
 from .numeric_utils import full_conv, conv_backprop
 
 
-class Convolution2D(BaseLayer):
+class Convolution2D(WeightedLayer):
     """
     2D Convolutional Layer.
     """
@@ -30,6 +31,20 @@ class Convolution2D(BaseLayer):
         self.__padding = padding
         self.__filter_size = self.__filters.shape[:2]
         self._cache = {}
+
+        self.__filters_update: UpdateStrategy = None
+        self.__bias_update: UpdateStrategy = None
+
+    def set_update_strategy(self, strategy_name: str, **kwargs):
+        """
+        Sets optimization strategy for filters and biases.
+        :param strategy_name:
+        :param kwargs:
+        :return:
+        """
+        optim_type = self.strategy_from_name(strategy_name)
+        self.__filters_update = optim_type(**kwargs)
+        self.__bias_update = optim_type(**kwargs)
 
     @property
     def filters(self) -> np.ndarray:
@@ -202,7 +217,7 @@ class Convolution2D(BaseLayer):
 
         return dw / dz.shape[0], da_prev
 
-    def back_prop(self, da: np.ndarray):
+    def compute_derivatives(self, da: np.ndarray):
         """
         Back propagation on this layer.
         :param da:
@@ -215,6 +230,21 @@ class Convolution2D(BaseLayer):
         dw, da_prev = self.__compute_dwda(dz)
         self._cache = {}
         return dw, db, da_prev
+
+    def back_prop(self, da: np.ndarray) -> np.ndarray:
+        """
+
+        :param da:
+        :return:
+        """
+        if self.__filters_update is None or self.__bias_update is None:
+            raise ValueError("No update strategy set!")
+
+        dw, db, daprev = self.compute_derivatives(da)
+        new_filt = self.__filters_update.update_params(self.__filters, dw)
+        new_b = self.__filters_update.update_params(self.__biases, db)
+        self.set_weights(new_filt, new_b)
+        return daprev
 
     def _fix_weights(self, w: np.ndarray, b: np.ndarray):
         """
@@ -229,7 +259,7 @@ class Convolution2D(BaseLayer):
         self.__biases = b
 
 
-class FlattenLayer(BaseLayer):
+class FlattenLayer(UnweightedLayer):
     """
     Layer to flatten the output of a convolutional network.
     """
@@ -257,19 +287,10 @@ class FlattenLayer(BaseLayer):
         out_shape = (x.shape[0], np.prod(x.shape[1:], dtype="int"))
         return x.reshape(out_shape).T
 
-    def back_prop(self, da: np.ndarray):
+    def back_prop(self, da: np.ndarray) -> np.ndarray:
         """
-        DUMMY
+        Backprop through layer (restore original shape).
         :param da:
         :return:
         """
-        return 0.0, 0.0, da.T.reshape(self._input_shape)
-
-    def _fix_weights(self, *args, **kwargs):
-        """
-        DUMMY
-        :param args:
-        :param kwargs:
-        :return:
-        """
-        pass
+        return da.T.reshape(self._input_shape)
