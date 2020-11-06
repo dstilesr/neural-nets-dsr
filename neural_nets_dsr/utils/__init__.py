@@ -1,0 +1,2 @@
+from .exponential_weighted_avg import ExpAvgAccumulator
+from .batch_iterators import FullBatchIterator, MiniBatchIterator

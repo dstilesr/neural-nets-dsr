@@ -24,6 +24,16 @@ class BaseBatchIter(ABC, Iterable[Tuple[np.ndarray, np.ndarray]]):
     def axis(self) -> int:
         return self._axis
 
+    @property
+    @abstractmethod
+    def current_epoch(self) -> int:
+        pass
+
+    @property
+    @abstractmethod
+    def epochs(self) -> int:
+        pass
+
     @abstractmethod
     def reset_iterator(self):
         pass
