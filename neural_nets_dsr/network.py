@@ -168,17 +168,19 @@ class NeuralNet:
 
         cost = self.get_cost_func(cost_function)
         self.make_batch_iterator(x, y, epochs, batch_size)
+        iter_count = 0
 
         for batch_x, batch_y in self._batch_iter:
+            iter_count += 1
             preds = self.compute_predictions(batch_x, train_mode=True)
             da = cost.gradient(batch_y, preds)
             for lyr in self.layers[::-1]:
                 da = lyr.back_prop(da)
 
-            if verbose and self._batch_iter.epoch % print_interval == 0:
+            if verbose and iter_count % print_interval == 0:
                 cost_val = cost(batch_y, preds)
                 print("Cost at iteration %03d: %0.5f" % (
-                    self._batch_iter.epoch,
+                    iter_count,
                     cost_val
                 ))
 

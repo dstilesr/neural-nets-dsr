@@ -152,7 +152,7 @@ class DenseLayer(WeightedLayer):
 
         dw, db, daprev = self.compute_derivatives(da)
         new_w = self.__w_update.update_params(self.__w, dw)
-        new_b = self.__b_update.update_params(self.__b, dw)
+        new_b = self.__b_update.update_params(self.__b, db)
         self.set_weights(new_w, new_b)
         return daprev
 

@@ -131,5 +131,5 @@ class WeightedLayer(BaseLayer, ABC):
         :param kwargs:
         :return:
         """
-        if self.__trainable:
+        if self.trainable:
             self._fix_weights(*args, **kwargs)

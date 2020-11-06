@@ -55,15 +55,6 @@ class Base2DPool(UnweightedLayer):
         )
         return out
 
-    def _fix_weights(self, *args, **kwargs):
-        """
-        Dummy method for compatibility.
-        :param args:
-        :param kwargs:
-        :return:
-        """
-        pass
-
 
 class MaxPool(Base2DPool):
     """
