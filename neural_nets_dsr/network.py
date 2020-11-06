@@ -1,8 +1,12 @@
 import numpy as np
+from . import cost_functions
 from typing import List, Union
 from .layers import DenseLayer
 from .layers.base import BaseLayer
 from .activations import ActivationFunc
+from .utils import FullBatchIterator, MiniBatchIterator
+
+U = Union[str, cost_functions.CostFunction]
 
 
 class NeuralNet:
@@ -12,6 +16,22 @@ class NeuralNet:
 
     def __init__(self, layers: List[BaseLayer]):
         self.layers = layers
+        self._batch_iter = None
+
+    @staticmethod
+    def get_cost_func(cost_name: U) -> cost_functions.CostFunction:
+        """
+        Gets a cost function from its name.
+        :param cost_name:
+        :return:
+        """
+        if isinstance(cost_name, cost_functions.CostFunction):
+            out = cost_name
+        elif cost_name in cost_functions.AVAILABLE_COST_FUNCS:
+            out = cost_functions.COST_NAMES[cost_name]
+        else:
+            raise ValueError("Unknown cost function!")
+        return out
 
     @property
     def depth(self) -> int:
@@ -87,16 +107,85 @@ class NeuralNet:
 
         return out
 
-    def append(self, other):
+    def make_batch_iterator(
+            self,
+            x: np.ndarray,
+            y: np.ndarray,
+            epochs: int,
+            batch_size: int) -> None:
         """
-        Appends the layers of the other network.
-        :param other: Another NeuralNet.
-        :return: None
+        Makes a batch iterator to run gradient descent.
+        :param x:
+        :param y:
+        :param epochs:
+        :param batch_size:
+        :return:
         """
-        fst_weights = other.layers[0].weights.shape[1]
-        if fst_weights != self.layers[-1].weights.shape[0]:
-            raise ValueError("Incompatible Lengths!")
+        axis = 0 if x.ndim == 4 else 1
+        if batch_size <= 0:
+            self._batch_iter = FullBatchIterator(
+                x,
+                y,
+                axis,
+                epochs
+            )
+        else:
+            self._batch_iter = MiniBatchIterator(
+                x,
+                y,
+                axis,
+                batch_size,
+                epochs,
+                True
+            )
 
-        self.layers.append(other.layers)
+    def fit(
+            self,
+            x: np.ndarray,
+            y: np.ndarray,
+            cost_function: U,
+            optim_strategy: str = "gradient_descent",
+            epochs: int = 100,
+            batch_size: int = -1,
+            verbose: bool = False,
+            print_interval: int = 100,
+            **kwargs) -> "NeuralNet":
+        """
+        Fits the network to the given data.
+        :param x: Training set features.
+        :param y: Training set labels.
+        :param cost_function: Cost funtion to use in training.
+        :param optim_strategy: Which optimizer to use.
+        :param epochs: Number of training epochs.
+        :param batch_size: Size of batch to use in training.
+        :param verbose: Periodically print cost.
+        :param print_interval: Number of iterations between cost prints.
+        :param kwargs: Hyperparameters for optimizer.
+        :return: The fitted network.
+        """
+        for lyr in self.layers:
+            lyr.set_update_strategy(optim_strategy, **kwargs)
+
+        cost = self.get_cost_func(cost_function)
+        self.make_batch_iterator(x, y, epochs, batch_size)
+
+        for batch_x, batch_y in self._batch_iter:
+            preds = self.compute_predictions(batch_x, train_mode=True)
+            da = cost.gradient(batch_y, preds)
+            for lyr in self.layers[::-1]:
+                da = lyr.back_prop(da)
+
+            if verbose and self._batch_iter.epoch % print_interval == 0:
+                cost_val = cost(batch_y, preds)
+                print("Cost at iteration %03d: %0.5f" % (
+                    self._batch_iter.epoch,
+                    cost_val
+                ))
+
+        if verbose:
+            all_pred = self.compute_predictions(x)
+            total_cost = cost(y, all_pred)
+            print("Training ended! Final cost: %0.5f" % total_cost)
+        return self
 
 
