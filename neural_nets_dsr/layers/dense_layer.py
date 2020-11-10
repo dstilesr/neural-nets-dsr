@@ -1,8 +1,8 @@
 import numpy as np
-from typing import Union
 from .. import activations
-from ..optim_strategies.base import UpdateStrategy
 from .base import WeightedLayer
+from typing import Union, Optional
+from ..optim_strategies.base import UpdateStrategy
 
 
 class DenseLayer(WeightedLayer):
@@ -24,8 +24,8 @@ class DenseLayer(WeightedLayer):
         self.__activation = activation
         self.cache = {}
 
-        self.__b_update: UpdateStrategy = None
-        self.__w_update: UpdateStrategy = None
+        self.__b_update: Optional[UpdateStrategy] = None
+        self.__w_update: Optional[UpdateStrategy] = None
 
     @classmethod
     def initialize(
