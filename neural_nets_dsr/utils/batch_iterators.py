@@ -1,6 +1,7 @@
 import numpy as np
 from typing import Iterable, Tuple
 from abc import ABC, abstractmethod
+from . import batch_extractors as extractors
 
 
 class BaseBatchIter(ABC, Iterable[Tuple[np.ndarray, np.ndarray]]):
@@ -19,6 +20,19 @@ class BaseBatchIter(ABC, Iterable[Tuple[np.ndarray, np.ndarray]]):
         self._y = y
         self._axis = axis
         self._ndim = x.ndim
+
+    @staticmethod
+    def get_batch_strategy(num_dims: int) -> extractors.BatchStrategy:
+        out = None
+        if num_dims == 2:
+            out = extractors.DenseStrategy()
+        elif num_dims == 3:
+            out = extractors.RecurrentStrategy()
+        elif num_dims == 4:
+            out = extractors.ConvStrategy()
+        else:
+            raise ValueError("Unknown number of dimensions!")
+        return out
 
     @property
     def axis(self) -> int:
@@ -125,7 +139,11 @@ class MiniBatchIterator(BaseBatchIter):
         self._current_epoch = 0
         self._current_index = 0
         self._batch_size = batch_size
-        self.__indices = np.arange(0, x.shape[axis])
+        self._batch_extractor = self.get_batch_strategy(x.ndim)
+        self.__indices = np.arange(
+            0,
+            x.shape[self._batch_extractor.examples_axis]
+        )
 
         if shuffle:
             np.random.seed(seed)
@@ -182,12 +200,4 @@ class MiniBatchIterator(BaseBatchIter):
         :return:
         """
         inds = self.next_indices()
-        if self._ndim == 2:
-            if self.axis == 0:
-                return self._x[inds, :], self._y[inds, :]
-            else:
-                return self._x[:, inds], self._y[:, inds]
-
-        elif self._ndim == 4:
-            assert self.axis == 0
-            return self._x[inds, :, :, :], self._y[:, inds]
+        return self._batch_extractor.extract(self._x, self._y, inds)

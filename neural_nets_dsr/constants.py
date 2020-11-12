@@ -15,3 +15,6 @@ LAYER_KWARGS = {
     "BatchNorm": [],
     "DenseLayer": ["num_neurons", "activation"]
 }
+
+
+__version__ = "1.0.0"

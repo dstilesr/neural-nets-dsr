@@ -1,10 +1,11 @@
 import numpy as np
+from abc import ABC
 from typing import Tuple
 from .base import UnweightedLayer
 from .numeric_utils import max_pool_2d, avg_pool_2d, expand_pooled
 
 
-class Base2DPool(UnweightedLayer):
+class Base2DPool(UnweightedLayer, ABC):
     """
     Abstract class for 2D pooling layers.
     """

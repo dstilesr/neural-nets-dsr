@@ -242,7 +242,7 @@ class Convolution2D(WeightedLayer):
 
         dw, db, daprev = self.compute_derivatives(da)
         new_filt = self.__filters_update.update_params(self.__filters, dw)
-        new_b = self.__filters_update.update_params(self.__biases, db)
+        new_b = self.__bias_update.update_params(self.__biases, db)
         self.set_weights(new_filt, new_b)
         return daprev
 

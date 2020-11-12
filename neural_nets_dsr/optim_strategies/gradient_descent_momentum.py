@@ -17,7 +17,7 @@ class GDMomentumStrategy(UpdateStrategy):
             beta: float = 0.9,
             normalize: bool = False):
 
-        assert 0.0 < beta < 0.1
+        assert 0.0 < beta < 1.0
         self.__learning_rate = learning_rate
         self.__l2_param = l2_param
         self.__beta = beta

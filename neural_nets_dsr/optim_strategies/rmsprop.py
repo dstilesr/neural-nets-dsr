@@ -18,7 +18,7 @@ class RMSPropStrategy(UpdateStrategy):
             normalize: bool = False,
             epsilon: float = 1e-6):
 
-        assert 0.0 < beta < 0.1
+        assert 0.0 < beta < 1.0
         self.__learning_rate = learning_rate
         self.__l2_param = l2_param
         self.__beta = beta

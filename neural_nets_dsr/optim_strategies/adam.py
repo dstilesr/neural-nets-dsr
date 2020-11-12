@@ -19,7 +19,7 @@ class AdamStrategy(UpdateStrategy):
             normalize: bool = True,
             epsilon: float = 1e-6):
 
-        assert 0.0 < beta_momentum < 0.1
+        assert 0.0 < beta_momentum < 1.0
         self.__learning_rate = learning_rate
         self.__l2_param = l2_param
         self.__beta_mom = beta_momentum
